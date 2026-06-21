@@ -1,1 +1,1 @@
-web: gunicorn appparabrisas:app
+web: gunicorn app:app
