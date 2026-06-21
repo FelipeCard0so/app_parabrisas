@@ -627,25 +627,20 @@ def erro_interno(e):
     return render_template("erro.html", mensagem="Erro interno do servidor"), 500
 
 
-# ============================================================
+# ==================================================
 # INICIALIZAÇÃO
-# ============================================================
+# ==================================================
 
 if __name__ == "__main__":
-    
-# Chamar na inicialização
-inicializar_banco_se_necessario()
-    try:
-        criar_banco()
-        debug_mode = app.config['DEBUG']
 
-        logger.info(f"Iniciando aplicação (Debug: {debug_mode})")
+    inicializar_banco_se_necessario()
 
-        app.run(
-            host="0.0.0.0",
-            port=int(os.getenv("PORT", 5000)),
-            debug=debug_mode
-        )
-    except Exception as e:
-        logger.critical(f"Erro ao iniciar aplicação: {e}")
-        raise
+    debug_mode = app.config.get('DEBUG', False)
+
+    logger.info(f"Iniciando aplicação (Debug: {debug_mode})")
+
+    app.run(
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", 5000)),
+        debug=debug_mode
+    )
