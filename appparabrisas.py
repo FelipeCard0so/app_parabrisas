@@ -46,6 +46,36 @@ logger = logging.getLogger(__name__)
 
 DB = "database.db"
 
+# ============================================================
+# ADICIONE ISSO NO INÍCIO DO appparabrisas.py
+# (Logo após: DB = "database.db")
+# ============================================================
+
+# ✅ Inicializar banco automaticamente
+def inicializar_banco_se_necessario():
+    """Cria o banco na primeira execução"""
+    try:
+        conn = sqlite3.connect(DB)
+        cursor = conn.cursor()
+        
+        # Verificar se tabelas existem
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='consultas'")
+        existe = cursor.fetchone()
+        
+        conn.close()
+        
+        if not existe:
+            logger.info("Banco não existe, criando...")
+            criar_banco()
+        else:
+            logger.info("Banco já existe")
+    except Exception as e:
+        logger.error(f"Erro ao verificar banco: {e}")
+        criar_banco()
+
+# Chamar na inicialização
+inicializar_banco_se_necessario()
+
 
 # ============================================================
 # BANCO DE DADOS
