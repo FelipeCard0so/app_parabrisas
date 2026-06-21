@@ -1,5 +1,5 @@
 /* ==========================
-   ANIMAÇÕES & KEYFRAMES
+   ANIMAÃ‡Ã•ES & KEYFRAMES
 ========================== */
 
 @keyframes slideInUp {
@@ -55,7 +55,7 @@
 }
 
 /* ==========================
-   BODY
+   BODY - BACKGROUND FULL
 ========================== */
 
 body {
@@ -81,7 +81,7 @@ body {
 }
 
 /* ==========================
-   TOPO & LOGO
+   TOPO & LOGO - SEM FAIXA BRANCA
 ========================== */
 
 .topo {
@@ -154,7 +154,7 @@ body {
 }
 
 /* ==========================
-   CABEÇALHO
+   CABEÃ‡ALHO
 ========================== */
 
 .cabecalho {
@@ -236,7 +236,7 @@ body {
 }
 
 /* ==========================
-   FORMULÁRIO
+   FORMULÃRIO
 ========================== */
 
 form {
@@ -262,6 +262,7 @@ form {
     color: #dc3545;
 }
 
+/* âœ… INPUTS - TEXTO LEGÃVEL #333333 */
 .grupo-campos input {
     padding: 14px 16px;
     border: 2px solid #e0e0e0;
@@ -269,6 +270,11 @@ form {
     font-size: 16px;
     transition: all 0.3s ease;
     background: #f9f9f9;
+    color: #333333;  /* âœ… TEXTO ESCURO E LEGÃVEL */
+}
+
+.grupo-campos input::placeholder {
+    color: #999999;  /* Placeholder mais claro */
 }
 
 .grupo-campos input:focus {
@@ -277,6 +283,7 @@ form {
     background: #fff;
     box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
     transform: translateY(-2px);
+    color: #333333;  /* Manter cor escura ao focar */
 }
 
 .grupo-campos input.campo-erro {
@@ -305,7 +312,7 @@ form {
 }
 
 /* ==========================
-   BOTÕES
+   BOTÃ•ES
 ========================== */
 
 .btn-principal {
@@ -516,6 +523,7 @@ td {
     padding: 14px 16px;
     border-bottom: 1px solid #e5e5e5;
     animation: fadeIn 0.5s ease;
+    color: #333333;  /* âœ… Texto visÃ­vel */
 }
 
 tr:hover {
@@ -533,7 +541,7 @@ tr:hover td {
 }
 
 /* ==========================
-   GRÁFICOS
+   GRÃFICOS
 ========================== */
 
 .graficos-container {
@@ -597,6 +605,11 @@ tr:hover td {
     font-size: 14px;
     background: white;
     transition: all 0.3s ease;
+    color: #333333;  /* âœ… Texto legÃ­vel */
+}
+
+.filtro-campo input::placeholder {
+    color: #999999;
 }
 
 .filtro-campo input:focus,
@@ -642,7 +655,7 @@ tr:hover td {
 }
 
 /* ==========================
-   PAGINAÇÃO
+   PAGINAÃ‡ÃƒO
 ========================== */
 
 .info-paginacao {
@@ -678,7 +691,7 @@ tr:hover td {
 }
 
 /* ==========================
-   RODAPÉ
+   RODAPÃ‰ - SEM FAIXA BRANCA
 ========================== */
 
 footer {
@@ -838,6 +851,7 @@ footer {
             border: none;
             padding-bottom: 10px;
             padding-top: 10px;
+            color: #333333;  /* âœ… Texto legÃ­vel em mobile */
         }
 
         td:before {
@@ -891,6 +905,10 @@ footer {
         background: #1a1a1a;
         color: #e0e0e0;
         border-color: #444;
+    }
+
+    .grupo-campos input::placeholder {
+        color: #666;
     }
 
     table th {
