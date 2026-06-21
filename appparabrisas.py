@@ -73,9 +73,6 @@ def inicializar_banco_se_necessario():
         logger.error(f"Erro ao verificar banco: {e}")
         criar_banco()
 
-# Chamar na inicialização
-inicializar_banco_se_necessario()
-
 
 # ============================================================
 # BANCO DE DADOS
@@ -635,6 +632,9 @@ def erro_interno(e):
 # ============================================================
 
 if __name__ == "__main__":
+    
+# Chamar na inicialização
+inicializar_banco_se_necessario()
     try:
         criar_banco()
         debug_mode = app.config['DEBUG']
