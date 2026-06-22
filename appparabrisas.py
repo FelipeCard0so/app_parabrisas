@@ -143,7 +143,7 @@ def extrair_preco_texto(texto):
     padroes = [
         r'R\$\s*(\d{1,3}(?:\.\d{3})*,\d{2})',  # R$ 1.800,00
         r'R\$\s*(\d{1,3}(?:\.\d{3})*)',          # R$ 1.800
-        r'R\$\s*(\d+(?:,\d{2})?)',               # R$ 1800 ou R$ 1800,00
+        r'R\$\s*(\d+(?:,\d{2})?)',               # R$ 1800
         r'R\$(\d+)',                              # R$1800
         r'(\d{1,3}(?:\.\d{3})+,\d{2})',          # 1.800,00 sem R$
     ]
@@ -164,36 +164,48 @@ def extrair_preco_texto(texto):
 
 def extrair_precos_de_resultado(resultado_serp):
     """
-    Extrai preços de um resultado SerpAPI.
-    Prioridade: extracted_price (campo numérico) > price (string) > snippet (texto livre)
+    Extrai preços de um resultado SerpAPI com logs detalhados para diagnóstico.
     """
     precos = []
 
-    # 1. Shopping results — campo mais confiável
-    for item in resultado_serp.get('shopping_results', [])[:8]:
+    shopping = resultado_serp.get('shopping_results', [])
+    inline   = resultado_serp.get('inline_shopping_results', [])
+    organic  = resultado_serp.get('organic_results', [])
 
-        # extracted_price já é um float — uso direto
+    logger.info(f"  Shopping results: {len(shopping)} itens")
+    logger.info(f"  Inline shopping:  {len(inline)} itens")
+    logger.info(f"  Organic results:  {len(organic)} itens")
+
+    # Log do primeiro item de cada tipo para diagnóstico
+    if shopping:
+        primeiro = shopping[0]
+        logger.info(f"  Primeiro shopping → price='{primeiro.get('price')}' extracted_price='{primeiro.get('extracted_price')}'")
+
+    if organic:
+        logger.info(f"  Primeiro organic snippet: {organic[0].get('snippet', '')[:150]}")
+
+    # 1. Shopping results — tenta extracted_price (float direto) ou price (string)
+    for item in shopping[:8]:
         extracted = item.get('extracted_price')
-        if extracted:
+        if extracted is not None:
             try:
                 valor = float(extracted)
                 if 200 <= valor <= 25000:
                     precos.append(valor)
-                    logger.info(f"Preço extraído (shopping extracted_price): R$ {valor}")
+                    logger.info(f"  ✅ extracted_price: R$ {valor}")
                     continue
             except (ValueError, TypeError):
                 pass
 
-        # Fallback: campo price como string
         preco = extrair_preco_texto(str(item.get('price', '')))
         if preco:
             precos.append(preco)
-            logger.info(f"Preço extraído (shopping price string): R$ {preco}")
+            logger.info(f"  ✅ price string: R$ {preco}")
 
     # 2. Inline shopping
-    for item in resultado_serp.get('inline_shopping_results', [])[:5]:
+    for item in inline[:5]:
         extracted = item.get('extracted_price')
-        if extracted:
+        if extracted is not None:
             try:
                 valor = float(extracted)
                 if 200 <= valor <= 25000:
@@ -207,42 +219,43 @@ def extrair_precos_de_resultado(resultado_serp):
 
     # 3. Resultados orgânicos — extrai do título + snippet
     if not precos:
-        for item in resultado_serp.get('organic_results', [])[:5]:
+        for item in organic[:8]:
             texto = f"{item.get('title', '')} {item.get('snippet', '')}"
             preco = extrair_preco_texto(texto)
             if preco:
                 precos.append(preco)
-                logger.info(f"Preço extraído (orgânico): R$ {preco}")
+                logger.info(f"  ✅ orgânico: R$ {preco}")
 
     return precos
 
 
 def buscar_precos_online(marca, modelo, ano):
-    """
-    Busca preços via SerpAPI. Retorna (original, paralelo) ou (None, None).
-    """
+    """Busca preços via SerpAPI. Retorna (original, paralelo) ou (None, None)."""
     try:
         from serp_service import pesquisar_google
 
-        logger.info(f"Buscando preços online: {marca} {modelo} {ano}")
+        logger.info(f"Buscando online: {marca} {modelo} {ano}")
 
+        # Busca original
+        logger.info("--- Busca ORIGINAL ---")
         resultado_original = pesquisar_google(
             f"parabrisa {marca} {modelo} {ano} original preço"
         )
         precos_original = extrair_precos_de_resultado(resultado_original)
 
+        # Busca paralelo
+        logger.info("--- Busca PARALELO ---")
         resultado_paralelo = pesquisar_google(
             f"parabrisa {marca} {modelo} {ano} paralelo preço"
         )
         precos_paralelo = extrair_precos_de_resultado(resultado_paralelo)
 
-        logger.info(f"Preços originais encontrados: {precos_original}")
-        logger.info(f"Preços paralelos encontrados: {precos_paralelo}")
+        logger.info(f"Preços originais: {precos_original}")
+        logger.info(f"Preços paralelos: {precos_paralelo}")
 
         original = round(sum(precos_original) / len(precos_original), 2) if precos_original else None
         paralelo = round(sum(precos_paralelo) / len(precos_paralelo), 2) if precos_paralelo else None
 
-        # Estima o que faltou com base no outro
         if original and not paralelo:
             paralelo = round(original * 0.65, 2)
             logger.info(f"Paralelo estimado: R$ {paralelo}")
@@ -304,7 +317,6 @@ def index():
 
         # 2. SerpAPI — se não achou no banco
         if not veiculo:
-            logger.info("Veículo não encontrado no banco. Buscando online...")
             original_online, paralelo_online = buscar_precos_online(marca, modelo, ano)
 
             if original_online and paralelo_online:
@@ -374,7 +386,7 @@ def index():
 
 
 # ==================================================
-# HISTÓRICO — com paginação
+# ✅ HISTÓRICO — query retorna TODAS as colunas
 # ==================================================
 
 @app.route("/historico")
@@ -394,8 +406,12 @@ def historico():
         pagina        = max(1, min(pagina, total_paginas))
         offset        = (pagina - 1) * por_pagina
 
+        # ✅ Retorna TODAS as colunas na ordem certa
+        # id[0], marca[1], modelo[2], ano[3], original[4], paralelo[5],
+        # media[6], categoria[7], percentual[8], avarias[9], valor_final[10], data_consulta[11]
         cursor.execute("""
-        SELECT data_consulta, marca, modelo, ano, media, valor_final
+        SELECT id, marca, modelo, ano, original, paralelo,
+               media, categoria, percentual, avarias, valor_final, data_consulta
         FROM consultas
         ORDER BY id DESC
         LIMIT ? OFFSET ?
