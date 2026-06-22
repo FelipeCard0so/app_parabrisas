@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request
+from flask_wtf.csrf import CSRFProtect
 import sqlite3
 import re
 import os
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'chave-local-dev')
+csrf = CSRFProtect(app)
 
 DB = "database.db"
 
