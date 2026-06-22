@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, send_file
 from flask_wtf.csrf import CSRFProtect
 import sqlite3
 import re
@@ -436,6 +436,117 @@ def historico():
         total_paginas=total_paginas,
         total_registros=total_registros
     )
+
+
+
+# ==================================================
+# EXPORTAR PDF
+# ==================================================
+
+@app.route("/exportar-pdf")
+def exportar_pdf():
+
+    try:
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib import colors
+        from reportlab.lib.units import inch
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from io import BytesIO
+
+        conn   = sqlite3.connect(DB)
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT data_consulta, marca, modelo, ano, media, valor_final
+        FROM consultas
+        ORDER BY id DESC
+        LIMIT 100
+        """)
+        dados = cursor.fetchall()
+        conn.close()
+
+        buffer = BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            rightMargin=40,
+            leftMargin=40,
+            topMargin=50,
+            bottomMargin=40
+        )
+
+        estilos = getSampleStyleSheet()
+        elementos = []
+
+        # Título
+        titulo_estilo = ParagraphStyle(
+            "titulo",
+            parent=estilos["Title"],
+            fontSize=18,
+            spaceAfter=6,
+            textColor=colors.HexColor("#0d6efd")
+        )
+        elementos.append(Paragraph("Histórico de Consultas", titulo_estilo))
+
+        sub_estilo = ParagraphStyle(
+            "sub",
+            parent=estilos["Normal"],
+            fontSize=10,
+            spaceAfter=20,
+            textColor=colors.grey
+        )
+        from datetime import datetime as dt
+        elementos.append(Paragraph(
+            f"Gerado em {dt.now().strftime('%d/%m/%Y %H:%M')} — {len(dados)} registros",
+            sub_estilo
+        ))
+
+        # Tabela
+        cabecalho = ["Data", "Marca", "Modelo", "Ano", "Média (R$)", "Valor Final (R$)"]
+        linhas = [cabecalho]
+
+        for row in dados:
+            linhas.append([
+                str(row[0]),
+                str(row[1]),
+                str(row[2]),
+                str(row[3]),
+                f"R$ {row[4]:.2f}",
+                f"R$ {row[5]:.2f}"
+            ])
+
+        tabela = Table(linhas, repeatRows=1)
+        tabela.setStyle(TableStyle([
+            ("BACKGROUND",    (0, 0), (-1, 0),  colors.HexColor("#0d6efd")),
+            ("TEXTCOLOR",     (0, 0), (-1, 0),  colors.white),
+            ("FONTNAME",      (0, 0), (-1, 0),  "Helvetica-Bold"),
+            ("FONTSIZE",      (0, 0), (-1, 0),  11),
+            ("ALIGN",         (0, 0), (-1, -1), "CENTER"),
+            ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f0f8ff")]),
+            ("FONTNAME",      (0, 1), (-1, -1), "Helvetica"),
+            ("FONTSIZE",      (0, 1), (-1, -1), 10),
+            ("GRID",          (0, 0), (-1, -1), 0.5, colors.HexColor("#dee2e6")),
+            ("TOPPADDING",    (0, 0), (-1, -1), 8),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+            ("LEFTPADDING",   (0, 0), (-1, -1), 6),
+            ("RIGHTPADDING",  (0, 0), (-1, -1), 6),
+        ]))
+
+        elementos.append(tabela)
+        doc.build(elementos)
+
+        buffer.seek(0)
+        return send_file(
+            buffer,
+            mimetype="application/pdf",
+            as_attachment=True,
+            download_name=f"historico_parabrisas_{dt.now().strftime('%Y%m%d_%H%M')}.pdf"
+        )
+
+    except Exception as e:
+        logger.error(f"Erro ao gerar PDF: {e}")
+        return f"Erro ao gerar PDF: {e}", 500
 
 
 # ==================================================
