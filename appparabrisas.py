@@ -67,19 +67,16 @@ def criar_banco():
     total = cursor.fetchone()[0]
 
     if total == 0:
-
         veiculos_teste = [
             ("Chevrolet", "Onix", "2022", 1700, 1100, datetime.now().strftime("%d/%m/%Y")),
             ("Fiat",      "Argo", "2022", 1800, 1200, datetime.now().strftime("%d/%m/%Y")),
             ("Hyundai",   "HB20", "2023", 1900, 1300, datetime.now().strftime("%d/%m/%Y")),
             ("BMW",       "X3",   "2022", 7000, 2800, datetime.now().strftime("%d/%m/%Y")),
         ]
-
         cursor.executemany("""
         INSERT INTO veiculos (marca, modelo, ano, original, paralelo, data_atualizacao)
         VALUES (?, ?, ?, ?, ?, ?)
         """, veiculos_teste)
-
         conn.commit()
         logger.info("Banco criado com dados iniciais.")
 
@@ -87,7 +84,7 @@ def criar_banco():
 
 
 # ==================================================
-# ✅ INICIALIZA O BANCO AQUI — RODA COM GUNICORN
+# ✅ INICIALIZA O BANCO — RODA COM GUNICORN TAMBÉM
 # ==================================================
 
 criar_banco()
@@ -98,11 +95,9 @@ criar_banco()
 # ==================================================
 
 def buscar_veiculo(marca, modelo, ano):
-
     try:
         conn = sqlite3.connect(DB)
         cursor = conn.cursor()
-
         cursor.execute("""
         SELECT original, paralelo, data_atualizacao
         FROM veiculos
@@ -110,38 +105,28 @@ def buscar_veiculo(marca, modelo, ano):
           AND LOWER(modelo) = LOWER(?)
           AND ano = ?
         """, (marca, modelo, ano))
-
         resultado = cursor.fetchone()
         conn.close()
         return resultado
-
     except Exception as e:
         logger.error(f"Erro ao buscar veículo: {e}")
         return None
 
 
 def salvar_veiculo_cache(marca, modelo, ano, original, paralelo):
-
     try:
         conn = sqlite3.connect(DB)
         cursor = conn.cursor()
-
         cursor.execute("""
         INSERT INTO veiculos (marca, modelo, ano, original, paralelo, data_atualizacao)
         VALUES (?, ?, ?, ?, ?, ?)
         """, (
-            marca,
-            modelo,
-            ano,
-            original,
-            paralelo,
+            marca, modelo, ano, original, paralelo,
             datetime.now().strftime("%d/%m/%Y")
         ))
-
         conn.commit()
         conn.close()
         logger.info(f"Veículo salvo no cache: {marca} {modelo} {ano}")
-
     except Exception as e:
         logger.error(f"Erro ao salvar cache: {e}")
 
@@ -151,17 +136,16 @@ def salvar_veiculo_cache(marca, modelo, ano, original, paralelo):
 # ==================================================
 
 def extrair_preco_texto(texto):
-    """
-    Extrai o primeiro preço em formato brasileiro do texto.
-    Ex: "R$ 1.800,00" → 1800.0
-    """
+    """Extrai preço de um texto. Aceita vários formatos brasileiros."""
     if not texto:
         return None
 
     padroes = [
-        r'R\$\s*(\d{1,3}(?:\.\d{3})*,\d{2})',   # R$ 1.800,00
-        r'R\$\s*(\d{1,3}(?:\.\d{3})*)',           # R$ 1.800
-        r'R\$\s*(\d+(?:,\d{2})?)',                # R$ 1800,00
+        r'R\$\s*(\d{1,3}(?:\.\d{3})*,\d{2})',  # R$ 1.800,00
+        r'R\$\s*(\d{1,3}(?:\.\d{3})*)',          # R$ 1.800
+        r'R\$\s*(\d+(?:,\d{2})?)',               # R$ 1800 ou R$ 1800,00
+        r'R\$(\d+)',                              # R$1800
+        r'(\d{1,3}(?:\.\d{3})+,\d{2})',          # 1.800,00 sem R$
     ]
 
     for padrao in padroes:
@@ -170,7 +154,6 @@ def extrair_preco_texto(texto):
             valor_str = match.group(1).replace('.', '').replace(',', '.')
             try:
                 valor = float(valor_str)
-                # Faixa razoável para para-brisa (R$ 200 até R$ 25.000)
                 if 200 <= valor <= 25000:
                     return valor
             except ValueError:
@@ -181,22 +164,44 @@ def extrair_preco_texto(texto):
 
 def extrair_precos_de_resultado(resultado_serp):
     """
-    Recebe um dict do SerpAPI e retorna lista de preços encontrados.
-    Tenta shopping_results primeiro, depois organic_results.
+    Extrai preços de um resultado SerpAPI.
+    Prioridade: extracted_price (campo numérico) > price (string) > snippet (texto livre)
     """
     precos = []
 
-    # 1. Shopping results — preços diretos e mais confiáveis
-    for item in resultado_serp.get('shopping_results', [])[:5]:
-        preco_str = item.get('price', '')
-        preco = extrair_preco_texto(preco_str)
+    # 1. Shopping results — campo mais confiável
+    for item in resultado_serp.get('shopping_results', [])[:8]:
+
+        # extracted_price já é um float — uso direto
+        extracted = item.get('extracted_price')
+        if extracted:
+            try:
+                valor = float(extracted)
+                if 200 <= valor <= 25000:
+                    precos.append(valor)
+                    logger.info(f"Preço extraído (shopping extracted_price): R$ {valor}")
+                    continue
+            except (ValueError, TypeError):
+                pass
+
+        # Fallback: campo price como string
+        preco = extrair_preco_texto(str(item.get('price', '')))
         if preco:
             precos.append(preco)
+            logger.info(f"Preço extraído (shopping price string): R$ {preco}")
 
-    # 2. Inline shopping (às vezes vem aqui)
+    # 2. Inline shopping
     for item in resultado_serp.get('inline_shopping_results', [])[:5]:
-        preco_str = item.get('price', '')
-        preco = extrair_preco_texto(preco_str)
+        extracted = item.get('extracted_price')
+        if extracted:
+            try:
+                valor = float(extracted)
+                if 200 <= valor <= 25000:
+                    precos.append(valor)
+                    continue
+            except (ValueError, TypeError):
+                pass
+        preco = extrair_preco_texto(str(item.get('price', '')))
         if preco:
             precos.append(preco)
 
@@ -207,27 +212,25 @@ def extrair_precos_de_resultado(resultado_serp):
             preco = extrair_preco_texto(texto)
             if preco:
                 precos.append(preco)
+                logger.info(f"Preço extraído (orgânico): R$ {preco}")
 
     return precos
 
 
 def buscar_precos_online(marca, modelo, ano):
     """
-    Busca preços de para-brisa original e paralelo no Google via SerpAPI.
-    Retorna (original, paralelo) ou (None, None) se não encontrar.
+    Busca preços via SerpAPI. Retorna (original, paralelo) ou (None, None).
     """
     try:
         from serp_service import pesquisar_google
 
         logger.info(f"Buscando preços online: {marca} {modelo} {ano}")
 
-        # Busca para-brisa original
         resultado_original = pesquisar_google(
             f"parabrisa {marca} {modelo} {ano} original preço"
         )
         precos_original = extrair_precos_de_resultado(resultado_original)
 
-        # Busca para-brisa paralelo
         resultado_paralelo = pesquisar_google(
             f"parabrisa {marca} {modelo} {ano} paralelo preço"
         )
@@ -236,23 +239,17 @@ def buscar_precos_online(marca, modelo, ano):
         logger.info(f"Preços originais encontrados: {precos_original}")
         logger.info(f"Preços paralelos encontrados: {precos_paralelo}")
 
-        original = None
-        paralelo = None
+        original = round(sum(precos_original) / len(precos_original), 2) if precos_original else None
+        paralelo = round(sum(precos_paralelo) / len(precos_paralelo), 2) if precos_paralelo else None
 
-        if precos_original:
-            original = round(sum(precos_original) / len(precos_original), 2)
-
-        if precos_paralelo:
-            paralelo = round(sum(precos_paralelo) / len(precos_paralelo), 2)
-
-        # Se achou um mas não o outro, estima o que faltou
+        # Estima o que faltou com base no outro
         if original and not paralelo:
-            paralelo = round(original * 0.65, 2)  # paralelo ~65% do original
-            logger.info(f"Paralelo estimado: {paralelo}")
+            paralelo = round(original * 0.65, 2)
+            logger.info(f"Paralelo estimado: R$ {paralelo}")
 
         if paralelo and not original:
-            original = round(paralelo / 0.65, 2)  # original ~original/0.65
-            logger.info(f"Original estimado: {original}")
+            original = round(paralelo / 0.65, 2)
+            logger.info(f"Original estimado: R$ {original}")
 
         return original, paralelo
 
@@ -268,37 +265,15 @@ def buscar_precos_online(marca, modelo, ano):
 def calcular_categoria(media):
 
     if media <= 1500:
-        return {
-            "categoria": "Popular",
-            "percentual": 35,
-            "classe": "popular",
-            "icone": "🟢"
-        }
-
+        return {"categoria": "Popular",       "percentual": 35, "classe": "popular",       "icone": "🟢"}
     elif media <= 4000:
-        return {
-            "categoria": "Intermediário",
-            "percentual": 20,
-            "classe": "intermediario",
-            "icone": "🟡"
-        }
+        return {"categoria": "Intermediário", "percentual": 20, "classe": "intermediario", "icone": "🟡"}
 
-    return {
-        "categoria": "Premium",
-        "percentual": 10,
-        "classe": "premium",
-        "icone": "🔴"
-    }
+    return     {"categoria": "Premium",       "percentual": 10, "classe": "premium",       "icone": "🔴"}
 
 
 def obter_teto(avarias):
-
-    tetos = {
-        1: 600,
-        2: 850,
-        3: 1100
-    }
-
+    tetos = {1: 600, 2: 850, 3: 1100}
     return tetos.get(avarias, 1400)
 
 
@@ -310,40 +285,40 @@ def obter_teto(avarias):
 def index():
 
     resultado = None
-    mensagem = None
+    mensagem  = None
 
     if request.method == "POST":
 
-        marca   = request.form.get("marca", "").strip()
-        modelo  = request.form.get("modelo", "").strip()
-        ano     = request.form.get("ano", "").strip()
+        marca   = request.form.get("marca",   "").strip()
+        modelo  = request.form.get("modelo",  "").strip()
+        ano     = request.form.get("ano",     "").strip()
         avarias = int(request.form.get("avarias", 1))
 
         if not marca or not modelo or not ano:
             mensagem = "Por favor, preencha todos os campos."
             return render_template("index.html", resultado=resultado, mensagem=mensagem)
 
-        # 1. Tenta encontrar no banco local
+        # 1. Banco local
         veiculo = buscar_veiculo(marca, modelo, ano)
-        fonte = "banco de dados"
+        fonte   = "banco de dados"
 
-        # 2. Se não achou, busca online via SerpAPI
+        # 2. SerpAPI — se não achou no banco
         if not veiculo:
-            logger.info(f"Veículo não encontrado no banco. Buscando online...")
+            logger.info("Veículo não encontrado no banco. Buscando online...")
             original_online, paralelo_online = buscar_precos_online(marca, modelo, ano)
 
             if original_online and paralelo_online:
                 salvar_veiculo_cache(marca, modelo, ano, original_online, paralelo_online)
                 veiculo = buscar_veiculo(marca, modelo, ano)
-                fonte = "pesquisa online"
+                fonte   = "pesquisa online"
             else:
                 mensagem = (
                     f"Veículo não encontrado: {marca} {modelo} {ano}. "
-                    f"Não foi possível encontrar preços online. "
+                    f"Não foi possível localizar preços. "
                     f"Verifique se o nome está correto."
                 )
 
-        # 3. Calcula se encontrou
+        # 3. Calcula
         if veiculo:
 
             original         = float(veiculo[0])
@@ -352,41 +327,32 @@ def index():
 
             media = (original + paralelo) / 2
 
-            info_categoria   = calcular_categoria(media)
-            categoria        = info_categoria["categoria"]
-            percentual_base  = info_categoria["percentual"]
-            classe_categoria = info_categoria["classe"]
-            icone_categoria  = info_categoria["icone"]
+            info             = calcular_categoria(media)
+            categoria        = info["categoria"]
+            percentual_base  = info["percentual"]
+            classe_categoria = info["classe"]
+            icone_categoria  = info["icone"]
 
             percentual_final = percentual_base + ((avarias - 1) * 10)
             valor_calculado  = media * (percentual_final / 100)
             teto             = obter_teto(avarias)
             valor_final      = min(valor_calculado, teto)
 
-            # Salva consulta no histórico
             try:
                 conn = sqlite3.connect(DB)
                 cursor = conn.cursor()
-
                 cursor.execute("""
                 INSERT INTO consultas (
-                    marca, modelo, ano,
-                    original, paralelo, media,
-                    categoria, percentual, avarias,
-                    valor_final, data_consulta
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    marca, modelo, ano, original, paralelo, media,
+                    categoria, percentual, avarias, valor_final, data_consulta
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
-                    marca, modelo, ano,
-                    original, paralelo, media,
-                    categoria, percentual_final, avarias,
-                    valor_final,
+                    marca, modelo, ano, original, paralelo, media,
+                    categoria, percentual_final, avarias, valor_final,
                     datetime.now().strftime("%d/%m/%Y %H:%M")
                 ))
-
                 conn.commit()
                 conn.close()
-
             except Exception as e:
                 logger.error(f"Erro ao salvar consulta: {e}")
 
@@ -408,30 +374,50 @@ def index():
 
 
 # ==================================================
-# HISTÓRICO
+# HISTÓRICO — com paginação
 # ==================================================
 
 @app.route("/historico")
 def historico():
 
     try:
-        conn = sqlite3.connect(DB)
+        pagina     = int(request.args.get("pagina", 1))
+        por_pagina = 10
+
+        conn   = sqlite3.connect(DB)
         cursor = conn.cursor()
+
+        cursor.execute("SELECT COUNT(*) FROM consultas")
+        total_registros = cursor.fetchone()[0]
+
+        total_paginas = max(1, (total_registros + por_pagina - 1) // por_pagina)
+        pagina        = max(1, min(pagina, total_paginas))
+        offset        = (pagina - 1) * por_pagina
 
         cursor.execute("""
         SELECT data_consulta, marca, modelo, ano, media, valor_final
         FROM consultas
         ORDER BY id DESC
-        """)
+        LIMIT ? OFFSET ?
+        """, (por_pagina, offset))
 
         dados = cursor.fetchall()
         conn.close()
 
     except Exception as e:
         logger.error(f"Erro ao buscar histórico: {e}")
-        dados = []
+        dados           = []
+        pagina          = 1
+        total_paginas   = 1
+        total_registros = 0
 
-    return render_template("historico.html", dados=dados)
+    return render_template(
+        "historico.html",
+        dados=dados,
+        pagina=pagina,
+        total_paginas=total_paginas,
+        total_registros=total_registros
+    )
 
 
 # ==================================================
