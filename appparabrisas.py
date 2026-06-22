@@ -264,6 +264,11 @@ def buscar_precos_online(marca, modelo, ano):
             original = round(paralelo / 0.65, 2)
             logger.info(f"Original estimado: R$ {original}")
 
+        # ✅ Garantir que original sempre é maior que paralelo
+        if original and paralelo and paralelo > original:
+            logger.info(f"Invertendo preços (paralelo > original): {original} <-> {paralelo}")
+            original, paralelo = paralelo, original
+
         return original, paralelo
 
     except Exception as e:
@@ -406,11 +411,9 @@ def historico():
         pagina        = max(1, min(pagina, total_paginas))
         offset        = (pagina - 1) * por_pagina
 
-        # ✅ data_consulta[0], marca[1], modelo[2], ano[3], original[4], paralelo[5]
-        # media[6], categoria[7], percentual[8], avarias[9], valor_final[10]
+        # Template espera: id[0], data_consulta[1], marca[2], modelo[3], ano[4], media[5], valor_final[6]
         cursor.execute("""
-        SELECT data_consulta, marca, modelo, ano, original, paralelo,
-               media, categoria, percentual, avarias, valor_final
+        SELECT id, data_consulta, marca, modelo, ano, media, valor_final
         FROM consultas
         ORDER BY id DESC
         LIMIT ? OFFSET ?
