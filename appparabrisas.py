@@ -406,12 +406,11 @@ def historico():
         pagina        = max(1, min(pagina, total_paginas))
         offset        = (pagina - 1) * por_pagina
 
-        # ✅ Retorna TODAS as colunas na ordem certa
-        # id[0], marca[1], modelo[2], ano[3], original[4], paralelo[5],
-        # media[6], categoria[7], percentual[8], avarias[9], valor_final[10], data_consulta[11]
+        # ✅ data_consulta[0], marca[1], modelo[2], ano[3], original[4], paralelo[5]
+        # media[6], categoria[7], percentual[8], avarias[9], valor_final[10]
         cursor.execute("""
-        SELECT id, marca, modelo, ano, original, paralelo,
-               media, categoria, percentual, avarias, valor_final, data_consulta
+        SELECT data_consulta, marca, modelo, ano, original, paralelo,
+               media, categoria, percentual, avarias, valor_final
         FROM consultas
         ORDER BY id DESC
         LIMIT ? OFFSET ?
