@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,15 +7,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
-
 <body>
-
 <div class="container">
 
     <!-- TOPO -->
     <div class="topo">
-        <img src="{{ url_for('static', filename='img/logo.png') }}"
-             alt="Logo" class="logo">
+        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo">
     </div>
 
     <!-- MENU -->
@@ -36,7 +32,7 @@
     <!-- GRÁFICOS -->
     <div class="graficos-container">
         <div class="grafico-card">
-            <h3>📊 Últimas Consultas - Valores</h3>
+            <h3>📊 Últimas Consultas — Valor de Serviço</h3>
             <canvas id="graficoValores" class="grafico-canvas"></canvas>
         </div>
         <div class="grafico-card">
@@ -47,29 +43,27 @@
 
     <!-- FILTROS -->
     <div class="filtros-container">
-
         <div class="filtro-campo">
             <label for="filtro-marca">🔍 Marca</label>
-            <input type="text" id="filtro-marca" placeholder="Ex: Fiat" oninput="aplicarFiltros()">
+            <input type="text" id="filtro-marca" placeholder="Ex: Fiat — mostra todos os Fiats"
+                   oninput="aplicarFiltros()">
         </div>
-
         <div class="filtro-campo">
             <label for="filtro-modelo">🔍 Modelo</label>
-            <input type="text" id="filtro-modelo" placeholder="Ex: Argo" oninput="aplicarFiltros()">
+            <input type="text" id="filtro-modelo" placeholder="Ex: Onix — mostra todos os anos"
+                   oninput="aplicarFiltros()">
         </div>
-
-        <button class="btn-filtro" style="background:#6c757d;" onclick="limparFiltros()">Limpar</button>
-        <a href="/exportar-pdf" class="btn-exportar" target="_blank">📄 Exportar PDF</a>
-
+        <div class="filtros-acoes">
+            <button class="btn-limpar" onclick="limparFiltros()">✕ Limpar</button>
+            <a href="/exportar-pdf" class="btn-exportar" target="_blank">📄 Exportar PDF</a>
+        </div>
     </div>
 
     <!-- CONTADOR -->
     <div class="info-paginacao">
         <p id="contadorResultados">
-            Mostrando resultados de
-            <strong>{{ (pagina - 1) * 10 + 1 }}</strong>
-            a
-            <strong>{{ [pagina * 10, total_registros]|min }}</strong>
+            Mostrando <strong>{{ (pagina - 1) * 10 + 1 }}</strong>
+            a <strong>{{ [pagina * 10, total_registros]|min }}</strong>
             de <strong>{{ total_registros }}</strong> consultas
         </p>
     </div>
@@ -77,6 +71,7 @@
     <!-- CARDS -->
     <div id="listaCards">
         {% for item in dados %}
+        {# item: id[0] data[1] marca[2] modelo[3] ano[4] orig[5] par[6] media[7] avarias[8] vf[9] #}
         <div class="card-historico linha-tabela"
              data-marca="{{ item[2]|lower }}"
              data-modelo="{{ item[3]|lower }}">
@@ -84,7 +79,7 @@
             <div class="card-header-hist">
                 <span class="card-data">📅 {{ item[1] }}</span>
                 <span class="card-avarias">
-                    {% if item[8] == 1 %}1 avaria{% else %}{{ item[8] }} avarias{% endif %}
+                    {{ item[8] }} {{ "avaria" if item[8] == 1 else "avarias" }}
                 </span>
             </div>
 
@@ -112,9 +107,7 @@
                 <span>Valor de Serviço</span>
                 <strong>
                     R$ {{ "%.2f"|format(item[9]) }}
-                    <small>
-                        (para {% if item[8] == 1 %}1 avaria{% else %}{{ item[8] }} avarias{% endif %})
-                    </small>
+                    <small>(para {{ item[8] }} {{ "avaria" if item[8] == 1 else "avarias" }})</small>
                 </strong>
             </div>
 
@@ -122,7 +115,7 @@
         {% endfor %}
     </div>
 
-    <!-- MENSAGEM SEM RESULTADOS (filtro) -->
+    <!-- NENHUM RESULTADO FILTRO -->
     <div id="semResultados" style="display:none;">
         <div class="alerta alerta-info">
             Nenhum resultado encontrado para este filtro.
@@ -132,7 +125,6 @@
     <!-- PAGINAÇÃO -->
     {% if total_paginas > 1 %}
     <div class="paginacao">
-
         {% if pagina > 1 %}
         <a href="/historico?pagina=1" class="btn-paginacao">« Primeira</a>
         <a href="/historico?pagina={{ pagina - 1 }}" class="btn-paginacao">‹ Anterior</a>
@@ -141,9 +133,7 @@
         <div class="numeros-pagina">
             {% set inicio = [1, pagina - 2]|max %}
             {% set fim = [total_paginas, pagina + 2]|min %}
-
-            {% if inicio > 1 %}<span>...</span>{% endif %}
-
+            {% if inicio > 1 %}<span style="color:#666; padding:0 4px;">...</span>{% endif %}
             {% for p in range(inicio, fim + 1) %}
                 {% if p == pagina %}
                 <span class="pagina-ativa">{{ p }}</span>
@@ -151,36 +141,30 @@
                 <a href="/historico?pagina={{ p }}" class="btn-paginacao">{{ p }}</a>
                 {% endif %}
             {% endfor %}
-
-            {% if fim < total_paginas %}<span>...</span>{% endif %}
+            {% if fim < total_paginas %}<span style="color:#666; padding:0 4px;">...</span>{% endif %}
         </div>
 
         {% if pagina < total_paginas %}
         <a href="/historico?pagina={{ pagina + 1 }}" class="btn-paginacao">Próxima ›</a>
         <a href="/historico?pagina={{ total_paginas }}" class="btn-paginacao">Última »</a>
         {% endif %}
-
     </div>
     {% endif %}
 
     {% else %}
-
     <div class="alerta alerta-info">
         <strong>Nenhuma consulta registrada</strong><br>
         Realize uma consulta para começar a construir seu histórico.
     </div>
-    <div style="text-align:center; margin-top:30px;">
-        <a href="/" class="btn-principal" style="display:inline-block; padding:10px 30px;">
+    <div style="text-align:center; margin-top:24px;">
+        <a href="/" class="btn-principal" style="display:inline-block; padding:12px 32px; border-radius:10px;">
             Nova Consulta
         </a>
     </div>
-
     {% endif %}
 
     <footer>
-        Sistema de Consulta de Reparo de Para-brisas
-        <br><br>
-        © 2026
+        Sistema de Consulta de Reparo de Para-brisas<br><br>© 2026
     </footer>
 
 </div>
@@ -194,88 +178,85 @@ const dadosGrafico = {
 };
 
 {% if dados %}
-// Gráfico 1 — Linha de valores
-const ctxValores = document.getElementById('graficoValores');
-if (ctxValores) {
-    new Chart(ctxValores, {
+// Gráfico linha
+const ctxV = document.getElementById('graficoValores');
+if (ctxV) {
+    new Chart(ctxV, {
         type: 'line',
         data: {
             labels: dadosGrafico.datas,
             datasets: [{
-                label: 'Valor Final (R$)',
+                label: 'Valor de Serviço (R$)',
                 data: dadosGrafico.valores,
-                borderColor: '#0d6efd',
-                backgroundColor: 'rgba(13,110,253,0.1)',
-                borderWidth: 3,
+                borderColor: '#4a9eff',
+                backgroundColor: 'rgba(74,158,255,0.1)',
+                borderWidth: 2,
                 fill: true,
                 tension: 0.4,
-                pointRadius: 6,
-                pointBackgroundColor: '#0d6efd',
-                pointBorderColor: 'white',
+                pointRadius: 5,
+                pointBackgroundColor: '#4a9eff',
+                pointBorderColor: '#1a1a1a',
                 pointBorderWidth: 2,
             }]
         },
         options: {
             responsive: true,
-            plugins: { legend: { display: true } },
+            plugins: {
+                legend: { labels: { color: '#ccc', font: { size: 13 } } }
+            },
             scales: {
+                x: { ticks: { color: '#888' }, grid: { color: '#3a3a3a' } },
                 y: {
                     beginAtZero: true,
-                    ticks: { callback: v => 'R$ ' + v.toFixed(0) }
+                    ticks: { color: '#888', callback: v => 'R$ ' + v.toFixed(0) },
+                    grid: { color: '#3a3a3a' }
                 }
             }
         }
     });
 }
 
-// Gráfico 2 — Distribuição por marca
-const ctxCat = document.getElementById('graficoCategorias');
-if (ctxCat) {
+// Gráfico pizza
+const ctxC = document.getElementById('graficoCategorias');
+if (ctxC) {
     const cont = {};
     dadosGrafico.marcas.forEach(m => cont[m] = (cont[m] || 0) + 1);
-    new Chart(ctxCat, {
+    new Chart(ctxC, {
         type: 'doughnut',
         data: {
             labels: Object.keys(cont),
             datasets: [{
                 data: Object.values(cont),
-                backgroundColor: ['#0d6efd','#28a745','#ffc107','#dc3545','#17a2b8','#6f42c1','#20c997','#fd7e14'],
-                borderColor: 'white',
+                backgroundColor: ['#4a9eff','#4dbb77','#ffd666','#ff6b6b','#a29bfe','#fd79a8'],
+                borderColor: '#2a2a2a',
                 borderWidth: 3,
             }]
         },
         options: {
             responsive: true,
-            plugins: { legend: { position: 'right' } }
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { color: '#ccc', font: { size: 13 }, padding: 16 }
+                }
+            }
         }
     });
 }
 {% endif %}
 
-// =============================================
-// FILTRO — por marca OU modelo, em tempo real
-// =============================================
+// FILTRO em tempo real
 function aplicarFiltros() {
     const marca  = document.getElementById('filtro-marca').value.trim().toLowerCase();
     const modelo = document.getElementById('filtro-modelo').value.trim().toLowerCase();
-
-    const cards = document.querySelectorAll('.linha-tabela');
+    const cards  = document.querySelectorAll('.linha-tabela');
     let visiveis = 0;
 
     cards.forEach(card => {
-        const marcaCard  = card.dataset.marca;
-        const modeloCard = card.dataset.modelo;
-
-        // Mostra se bate com marca (se preenchida) E modelo (se preenchido)
-        const bateMarca  = !marca  || marcaCard.includes(marca);
-        const bateModelo = !modelo || modeloCard.includes(modelo);
-
-        if (bateMarca && bateModelo) {
-            card.style.display = '';
-            visiveis++;
-        } else {
-            card.style.display = 'none';
-        }
+        const bateMarca  = !marca  || card.dataset.marca.includes(marca);
+        const bateModelo = !modelo || card.dataset.modelo.includes(modelo);
+        card.style.display = bateMarca && bateModelo ? '' : 'none';
+        if (bateMarca && bateModelo) visiveis++;
     });
 
     document.getElementById('semResultados').style.display = visiveis === 0 ? 'block' : 'none';
@@ -288,6 +269,5 @@ function limparFiltros() {
     document.getElementById('semResultados').style.display = 'none';
 }
 </script>
-
 </body>
 </html>
