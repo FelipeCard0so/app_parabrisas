@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Histórico de Consultas</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <!-- Chart.js para gráficos -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 </head>
 
@@ -32,89 +31,102 @@
         <p>Consultas realizadas pelo sistema.</p>
     </div>
 
-    <!-- GRÁFICOS -->
     {% if dados %}
-    <div class="graficos-container">
 
-        <!-- Gráfico 1: Valores Finais -->
+    <!-- GRÁFICOS -->
+    <div class="graficos-container">
         <div class="grafico-card">
             <h3>📊 Últimas Consultas - Valores</h3>
             <canvas id="graficoValores" class="grafico-canvas"></canvas>
         </div>
-
-        <!-- Gráfico 2: Distribuição de Categorias -->
         <div class="grafico-card">
-            <h3>📈 Distribuição por Categoria</h3>
+            <h3>📈 Distribuição por Marca</h3>
             <canvas id="graficoCategorias" class="grafico-canvas"></canvas>
         </div>
-
     </div>
-    {% endif %}
 
     <!-- FILTROS -->
-    {% if dados %}
     <div class="filtros-container">
+
         <div class="filtro-campo">
             <label for="filtro-marca">🔍 Marca</label>
-            <input type="text" id="filtro-marca" placeholder="Ex: Fiat">
+            <input type="text" id="filtro-marca" placeholder="Ex: Fiat" oninput="aplicarFiltros()">
         </div>
+
         <div class="filtro-campo">
             <label for="filtro-modelo">🔍 Modelo</label>
-            <input type="text" id="filtro-modelo" placeholder="Ex: Argo">
+            <input type="text" id="filtro-modelo" placeholder="Ex: Argo" oninput="aplicarFiltros()">
         </div>
-        <div class="filtro-campo">
-            <label for="filtro-min">Valor Min</label>
-            <input type="number" id="filtro-min" placeholder="R$ 0">
-        </div>
-        <div class="filtro-campo">
-            <label for="filtro-max">Valor Max</label>
-            <input type="number" id="filtro-max" placeholder="R$ 9999">
-        </div>
-        <button class="btn-filtro" onclick="aplicarFiltros()">Filtrar</button>
-        <button class="btn-filtro" style="background: #6c757d;" onclick="limparFiltros()">Limpar</button>
+
+        <button class="btn-filtro" style="background:#6c757d;" onclick="limparFiltros()">Limpar</button>
         <a href="/exportar-pdf" class="btn-exportar" target="_blank">📄 Exportar PDF</a>
+
     </div>
-    {% endif %}
 
-    <!-- INFORMAÇÕES DE PAGINAÇÃO -->
-    {% if dados %}
-
+    <!-- CONTADOR -->
     <div class="info-paginacao">
-        <p>Mostrando resultados de
-           <strong>{{ (pagina - 1) * 10 + 1 }}</strong>
-           a
-           <strong>{{ [pagina * 10, total_registros]|min }}</strong>
-           de <strong>{{ total_registros }}</strong> consultas
+        <p id="contadorResultados">
+            Mostrando resultados de
+            <strong>{{ (pagina - 1) * 10 + 1 }}</strong>
+            a
+            <strong>{{ [pagina * 10, total_registros]|min }}</strong>
+            de <strong>{{ total_registros }}</strong> consultas
         </p>
     </div>
 
-    <!-- TABELA -->
-    <div class="tabela-container">
-        <table id="tabelaHistorico">
-            <thead>
-                <tr>
-                    <th>Data</th>
-                    <th>Veículo</th>
-                    <th>Média</th>
-                    <th>Valor Final</th>
-                </tr>
-            </thead>
-            <tbody id="corpoTabela">
-                {% for item in dados %}
-                <tr class="linha-tabela" data-marca="{{ item[2] }}" data-modelo="{{ item[3] }}" data-valor="{{ item[6] }}">
-                    <td data-label="Data">{{ item[1] }}</td>
-                    <td data-label="Veículo">
-                        <strong>{{ item[2] }}</strong> {{ item[3] }}
-                        <br><small class="cor-secundaria">{{ item[4] }}</small>
-                    </td>
-                    <td data-label="Média">R$ {{ "%.2f"|format(item[5]) }}</td>
-                    <td data-label="Valor Final" class="valor-destaque">
-                        <strong>R$ {{ "%.2f"|format(item[6]) }}</strong>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- CARDS -->
+    <div id="listaCards">
+        {% for item in dados %}
+        <div class="card-historico linha-tabela"
+             data-marca="{{ item[2]|lower }}"
+             data-modelo="{{ item[3]|lower }}">
+
+            <div class="card-header-hist">
+                <span class="card-data">📅 {{ item[1] }}</span>
+                <span class="card-avarias">
+                    {% if item[8] == 1 %}1 avaria{% else %}{{ item[8] }} avarias{% endif %}
+                </span>
+            </div>
+
+            <div class="card-veiculo">
+                <strong>{{ item[2] }}</strong> {{ item[3] }}
+                <span class="card-ano">{{ item[4] }}</span>
+            </div>
+
+            <div class="card-precos">
+                <div class="card-preco-linha">
+                    <span>Para-brisa Original</span>
+                    <span>R$ {{ "%.2f"|format(item[5]) }}</span>
+                </div>
+                <div class="card-preco-linha">
+                    <span>Para-brisa Paralelo</span>
+                    <span>R$ {{ "%.2f"|format(item[6]) }}</span>
+                </div>
+                <div class="card-preco-linha card-media">
+                    <span>Média</span>
+                    <span>R$ {{ "%.2f"|format(item[7]) }}</span>
+                </div>
+            </div>
+
+            <div class="card-valor-servico">
+                <span>Valor de Serviço</span>
+                <strong>
+                    R$ {{ "%.2f"|format(item[9]) }}
+                    <small>
+                        (para {% if item[8] == 1 %}1 avaria{% else %}{{ item[8] }} avarias{% endif %})
+                    </small>
+                </strong>
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- MENSAGEM SEM RESULTADOS (filtro) -->
+    <div id="semResultados" style="display:none;">
+        <div class="alerta alerta-info">
+            Nenhum resultado encontrado para este filtro.
+        </div>
     </div>
 
     <!-- PAGINAÇÃO -->
@@ -130,9 +142,7 @@
             {% set inicio = [1, pagina - 2]|max %}
             {% set fim = [total_paginas, pagina + 2]|min %}
 
-            {% if inicio > 1 %}
-            <span>...</span>
-            {% endif %}
+            {% if inicio > 1 %}<span>...</span>{% endif %}
 
             {% for p in range(inicio, fim + 1) %}
                 {% if p == pagina %}
@@ -142,9 +152,7 @@
                 {% endif %}
             {% endfor %}
 
-            {% if fim < total_paginas %}
-            <span>...</span>
-            {% endif %}
+            {% if fim < total_paginas %}<span>...</span>{% endif %}
         </div>
 
         {% if pagina < total_paginas %}
@@ -161,16 +169,14 @@
         <strong>Nenhuma consulta registrada</strong><br>
         Realize uma consulta para começar a construir seu histórico.
     </div>
-
-    <div style="text-align: center; margin-top: 30px;">
-        <a href="/" class="btn-principal" style="display: inline-block; padding: 10px 30px;">
+    <div style="text-align:center; margin-top:30px;">
+        <a href="/" class="btn-principal" style="display:inline-block; padding:10px 30px;">
             Nova Consulta
         </a>
     </div>
 
     {% endif %}
 
-    <!-- RODAPÉ -->
     <footer>
         Sistema de Consulta de Reparo de Para-brisas
         <br><br>
@@ -179,17 +185,16 @@
 
 </div>
 
-<!-- JavaScript para Gráficos e Filtros -->
 <script>
 // Dados para gráficos
 const dadosGrafico = {
-    datas: [{% for item in dados %}"{{ item[1][:5] }}"{{ "," if not loop.last }}{% endfor %}],
-    valores: [{% for item in dados %}{{ item[6] }}{{ "," if not loop.last }}{% endfor %}],
+    datas:  [{% for item in dados %}"{{ item[1][:5] }}"{{ "," if not loop.last }}{% endfor %}],
+    valores:[{% for item in dados %}{{ item[9] }}{{ "," if not loop.last }}{% endfor %}],
     marcas: [{% for item in dados %}"{{ item[2] }}"{{ "," if not loop.last }}{% endfor %}],
 };
 
-// Gráfico 1: Linha de valores finais
 {% if dados %}
+// Gráfico 1 — Linha de valores
 const ctxValores = document.getElementById('graficoValores');
 if (ctxValores) {
     new Chart(ctxValores, {
@@ -200,7 +205,7 @@ if (ctxValores) {
                 label: 'Valor Final (R$)',
                 data: dadosGrafico.valores,
                 borderColor: '#0d6efd',
-                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                backgroundColor: 'rgba(13,110,253,0.1)',
                 borderWidth: 3,
                 fill: true,
                 tension: 0.4,
@@ -208,136 +213,81 @@ if (ctxValores) {
                 pointBackgroundColor: '#0d6efd',
                 pointBorderColor: 'white',
                 pointBorderWidth: 2,
-                pointHoverRadius: 8,
-                shadowOffsetX: 0,
-                shadowOffsetY: 5,
-                shadowBlur: 15,
-                shadowColor: 'rgba(13, 110, 253, 0.3)',
             }]
         },
         options: {
             responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: {
-                    display: true,
-                    labels: {
-                        font: { size: 14, weight: 'bold' },
-                        color: '#333',
-                    }
-                }
-            },
+            plugins: { legend: { display: true } },
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            return 'R$ ' + value.toFixed(0);
-                        }
-                    }
+                    ticks: { callback: v => 'R$ ' + v.toFixed(0) }
                 }
             }
         }
     });
 }
 
-// Gráfico 2: Distribuição de categorias (Pizza)
-const ctxCategorias = document.getElementById('graficoCategorias');
-if (ctxCategorias) {
-    const categoriasCont = {};
-    dadosGrafico.marcas.forEach(marca => {
-        categoriasCont[marca] = (categoriasCont[marca] || 0) + 1;
-    });
-
-    new Chart(ctxCategorias, {
+// Gráfico 2 — Distribuição por marca
+const ctxCat = document.getElementById('graficoCategorias');
+if (ctxCat) {
+    const cont = {};
+    dadosGrafico.marcas.forEach(m => cont[m] = (cont[m] || 0) + 1);
+    new Chart(ctxCat, {
         type: 'doughnut',
         data: {
-            labels: Object.keys(categoriasCont),
+            labels: Object.keys(cont),
             datasets: [{
-                data: Object.values(categoriasCont),
-                backgroundColor: [
-                    '#0d6efd',
-                    '#28a745',
-                    '#ffc107',
-                    '#dc3545',
-                    '#17a2b8',
-                    '#6f42c1',
-                    '#20c997',
-                    '#fd7e14',
-                ],
+                data: Object.values(cont),
+                backgroundColor: ['#0d6efd','#28a745','#ffc107','#dc3545','#17a2b8','#6f42c1','#20c997','#fd7e14'],
                 borderColor: 'white',
                 borderWidth: 3,
             }]
         },
         options: {
             responsive: true,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        font: { size: 14, weight: 'bold' },
-                        padding: 15,
-                    }
-                }
-            }
+            plugins: { legend: { position: 'right' } }
         }
     });
 }
 {% endif %}
 
-// Função para aplicar filtros
+// =============================================
+// FILTRO — por marca OU modelo, em tempo real
+// =============================================
 function aplicarFiltros() {
-    const marca = document.getElementById('filtro-marca').value.toLowerCase();
-    const modelo = document.getElementById('filtro-modelo').value.toLowerCase();
-    const valMin = parseFloat(document.getElementById('filtro-min').value) || 0;
-    const valMax = parseFloat(document.getElementById('filtro-max').value) || Infinity;
+    const marca  = document.getElementById('filtro-marca').value.trim().toLowerCase();
+    const modelo = document.getElementById('filtro-modelo').value.trim().toLowerCase();
 
-    const linhas = document.querySelectorAll('.linha-tabela');
-    let visíveis = 0;
+    const cards = document.querySelectorAll('.linha-tabela');
+    let visiveis = 0;
 
-    linhas.forEach(linha => {
-        const marcaLinha = linha.dataset.marca.toLowerCase();
-        const modeloLinha = linha.dataset.modelo.toLowerCase();
-        const valorLinha = parseFloat(linha.dataset.valor);
+    cards.forEach(card => {
+        const marcaCard  = card.dataset.marca;
+        const modeloCard = card.dataset.modelo;
 
-        const corresponde =
-            marcaLinha.includes(marca) &&
-            modeloLinha.includes(modelo) &&
-            valorLinha >= valMin &&
-            valorLinha <= valMax;
+        // Mostra se bate com marca (se preenchida) E modelo (se preenchido)
+        const bateMarca  = !marca  || marcaCard.includes(marca);
+        const bateModelo = !modelo || modeloCard.includes(modelo);
 
-        linha.style.display = corresponde ? '' : 'none';
-        if (corresponde) visíveis++;
+        if (bateMarca && bateModelo) {
+            card.style.display = '';
+            visiveis++;
+        } else {
+            card.style.display = 'none';
+        }
     });
 
-    if (visíveis === 0) {
-        alert('Nenhum resultado encontrado com esses filtros.');
-    }
+    document.getElementById('semResultados').style.display = visiveis === 0 ? 'block' : 'none';
 }
 
-// Função para limpar filtros
 function limparFiltros() {
-    document.getElementById('filtro-marca').value = '';
+    document.getElementById('filtro-marca').value  = '';
     document.getElementById('filtro-modelo').value = '';
-    document.getElementById('filtro-min').value = '';
-    document.getElementById('filtro-max').value = '';
-
-    document.querySelectorAll('.linha-tabela').forEach(linha => {
-        linha.style.display = '';
-    });
+    document.querySelectorAll('.linha-tabela').forEach(c => c.style.display = '');
+    document.getElementById('semResultados').style.display = 'none';
 }
-
-// Aplicar filtros ao pressionar Enter
-document.addEventListener('DOMContentLoaded', function() {
-    ['filtro-marca', 'filtro-modelo', 'filtro-min', 'filtro-max'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') aplicarFiltros();
-        });
-    });
-});
 </script>
 
 </body>
-
 </html>
