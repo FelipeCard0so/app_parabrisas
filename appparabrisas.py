@@ -411,9 +411,10 @@ def historico():
         pagina        = max(1, min(pagina, total_paginas))
         offset        = (pagina - 1) * por_pagina
 
-        # Template espera: id[0], data_consulta[1], marca[2], modelo[3], ano[4], media[5], valor_final[6]
+        # id[0], data[1], marca[2], modelo[3], ano[4], original[5], paralelo[6], media[7], avarias[8], valor_final[9]
         cursor.execute("""
-        SELECT id, data_consulta, marca, modelo, ano, media, valor_final
+        SELECT id, data_consulta, marca, modelo, ano,
+               original, paralelo, media, avarias, valor_final
         FROM consultas
         ORDER BY id DESC
         LIMIT ? OFFSET ?
@@ -457,7 +458,8 @@ def exportar_pdf():
         conn   = sqlite3.connect(DB)
         cursor = conn.cursor()
         cursor.execute("""
-        SELECT data_consulta, marca, modelo, ano, media, valor_final
+        SELECT data_consulta, marca, modelo, ano,
+               original, paralelo, media, avarias, valor_final
         FROM consultas
         ORDER BY id DESC
         LIMIT 100
@@ -502,17 +504,19 @@ def exportar_pdf():
         ))
 
         # Tabela
-        cabecalho = ["Data", "Marca", "Modelo", "Ano", "Média (R$)", "Valor Final (R$)"]
+        cabecalho = ["Data", "Veículo", "Original", "Paralelo", "Média", "Avarias", "Valor de Serviço"]
         linhas = [cabecalho]
 
         for row in dados:
+            avarias = int(row[7])
             linhas.append([
                 str(row[0]),
-                str(row[1]),
-                str(row[2]),
-                str(row[3]),
+                f"{row[1]} {row[2]} {row[3]}",
                 f"R$ {row[4]:.2f}",
-                f"R$ {row[5]:.2f}"
+                f"R$ {row[5]:.2f}",
+                f"R$ {row[6]:.2f}",
+                f"{avarias} avaria{'s' if avarias > 1 else ''}",
+                f"R$ {row[8]:.2f}"
             ])
 
         tabela = Table(linhas, repeatRows=1)
