@@ -6,6 +6,201 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Consulta Inteligente de Reparo</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* ── MODAL OVERLAY ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.72);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-overlay.aberto {
+            display: flex;
+        }
+
+        /* ── MODAL CARD ── */
+        .modal-card {
+            background: #1c1f26;
+            border: 1px solid #2a3040;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+        }
+
+        .modal-card.visivel {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── HEADER DO MODAL ── */
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 20px 22px 16px;
+            border-bottom: 1px solid #22273a;
+        }
+
+        .modal-veiculo {
+            flex: 1;
+        }
+
+        .modal-veiculo-nome {
+            font-size: 20px;
+            font-weight: 700;
+            color: #f0f0f0;
+            margin-bottom: 4px;
+        }
+
+        .modal-veiculo-meta {
+            font-size: 12px;
+            color: #607080;
+        }
+
+        .modal-fechar {
+            background: #22273a;
+            border: none;
+            color: #8090a0;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            margin-left: 12px;
+            padding: 0;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .modal-fechar:hover {
+            background: #f56565;
+            color: white;
+            transform: rotate(90deg);
+            box-shadow: none;
+        }
+
+        /* ── CORPO DO MODAL ── */
+        .modal-body {
+            padding: 20px 22px;
+        }
+
+        .modal-badge-wrap {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-precos {
+            border-top: 1px solid #22273a;
+            border-bottom: 1px solid #22273a;
+            padding: 12px 0;
+            margin-bottom: 16px;
+        }
+
+        .modal-linha {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #8090a0;
+            padding: 5px 0;
+        }
+
+        .modal-linha.destaque {
+            color: #c0d0e0;
+            font-weight: 600;
+            font-size: 15px;
+            margin-top: 8px;
+            padding-top: 10px;
+            border-top: 1px dashed #2a3040;
+        }
+
+        .modal-linha span:last-child {
+            color: #c0d0e0;
+            font-weight: 500;
+        }
+
+        .modal-linha.destaque span:last-child {
+            color: #e0e8f0;
+            font-weight: 700;
+        }
+
+        /* ── VALOR DE SERVIÇO ── */
+        .modal-valor-servico {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 4px 0;
+        }
+
+        .modal-valor-servico .label {
+            font-size: 14px;
+            color: #8090a0;
+        }
+
+        .modal-valor-servico .valor {
+            text-align: right;
+        }
+
+        .modal-valor-servico .valor strong {
+            display: block;
+            font-size: 28px;
+            font-weight: 900;
+            color: #4d9fff;
+            line-height: 1.1;
+        }
+
+        .modal-valor-servico .valor small {
+            font-size: 12px;
+            color: #607080;
+        }
+
+        /* ── NOVA CONSULTA BOTÃO ── */
+        .modal-nova-consulta {
+            margin-top: 18px;
+            padding: 13px;
+            background: transparent;
+            border: 1.5px solid #2a3a55;
+            border-radius: 10px;
+            color: #4d9fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            text-align: center;
+            box-shadow: none;
+        }
+
+        .modal-nova-consulta:hover {
+            background: #1a2535;
+            border-color: #4d9fff;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* ── SCROLLBAR ── */
+        .modal-card::-webkit-scrollbar { width: 4px; }
+        .modal-card::-webkit-scrollbar-track { background: transparent; }
+        .modal-card::-webkit-scrollbar-thumb { background: #2a3040; border-radius: 4px; }
+    </style>
 </head>
 
 <body>
@@ -20,7 +215,7 @@
 
     <!-- MENU -->
     <div class="menu">
-        <a href="/" class="menu-ativo">Nova Consulta</a>
+        <a href="/">Nova Consulta</a>
         <a href="/historico">Histórico</a>
     </div>
 
@@ -30,163 +225,181 @@
         <p>Informe os dados do veículo para obter uma estimativa baseada no valor médio do para-brisa.</p>
     </div>
 
-    <!-- MENSAGEM DE ERRO/SUCESSO -->
-    {% if mensagem %}
-    <div class="alerta alerta-{{ tipo_erro | default('info') }}">
-        {{ mensagem }}
-        <button class="btn-fechar-alerta" onclick="this.parentElement.style.display='none';">×</button>
-    </div>
-    {% endif %}
-
     <!-- FORMULÁRIO -->
-    <form method="POST" id="formularioConsulta" novalidate>
+    <form method="POST" id="formConsulta">
 
-<!-- ✅ Token CSRF (Hidden Input) -->
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
 
         <div class="grupo-campos">
-            <label for="marca">Marca <span class="obrigatorio">*</span></label>
-            <input
-                id="marca"
-                type="text"
-                name="marca"
-                placeholder="Ex: Fiat"
-                required
-                minlength="2"
-                maxlength="50"
-                autocomplete="off"
-                aria-label="Marca do veículo">
-            <span class="erro-campo" id="erro-marca"></span>
+            <label>Marca <span class="obrigatorio">*</span></label>
+            <input type="text" name="marca" placeholder="Ex: Fiat" required
+                   value="{{ request.form.get('marca', '') }}">
         </div>
 
         <div class="grupo-campos">
-            <label for="modelo">Modelo <span class="obrigatorio">*</span></label>
-            <input
-                id="modelo"
-                type="text"
-                name="modelo"
-                placeholder="Ex: Argo"
-                required
-                minlength="2"
-                maxlength="50"
-                autocomplete="off"
-                aria-label="Modelo do veículo">
-            <span class="erro-campo" id="erro-modelo"></span>
+            <label>Modelo <span class="obrigatorio">*</span></label>
+            <input type="text" name="modelo" placeholder="Ex: Argo" required
+                   value="{{ request.form.get('modelo', '') }}">
         </div>
 
         <div class="grupo-campos">
-            <label for="ano">Ano <span class="obrigatorio">*</span></label>
-            <input
-                id="ano"
-                type="number"
-                name="ano"
-                placeholder="Ex: 2022"
-                min="1990"
-                max="2035"
-                required
-                autocomplete="off"
-                aria-label="Ano do veículo">
-            <span class="erro-campo" id="erro-ano"></span>
+            <label>Ano <span class="obrigatorio">*</span></label>
+            <input type="number" name="ano" placeholder="Ex: 2022"
+                   min="1980" max="2035" required
+                   value="{{ request.form.get('ano', '') }}">
         </div>
 
         <div class="grupo-campos">
-            <label for="avarias">Quantidade de Avarias <span class="obrigatorio">*</span></label>
-            <input
-                id="avarias"
-                type="number"
-                name="avarias"
-                min="1"
-                max="10"
-                value="1"
-                required
-                autocomplete="off"
-                aria-label="Quantidade de avarias">
-            <span class="erro-campo" id="erro-avarias"></span>
-            <small class="dica">De 1 a 10 avarias</small>
+            <label>Quantidade de Avarias <span class="obrigatorio">*</span></label>
+            <input type="number" name="avarias" min="1" max="10"
+                   value="{{ request.form.get('avarias', '1') }}" required>
+            <span class="dica">De 1 a 10 avarias</span>
         </div>
 
-        <button type="submit" id="btnSubmit" class="btn-principal">
-            <span id="btnTexto">Calcular Orçamento</span>
-            <span id="btnCarregando" style="display:none;">⏳ Processando...</span>
-        </button>
+        <button type="submit">Calcular Orçamento</button>
 
     </form>
 
-    <!-- RESULTADO -->
-    {% if resultado %}
-
-    <div class="resultado" id="resultado">
-
-        <h2>Resultado da Consulta</h2>
-
-        <div style="text-align:center; margin-bottom:25px;">
-            <span class="badge {{ resultado.classe_categoria }}">
-                {{ resultado.icone_categoria }}
-                {{ resultado.categoria }}
-            </span>
-        </div>
-
-        <div class="linha">
-            <span>Para-brisa Original</span>
-            <strong>R$ {{ "%.2f"|format(resultado.original) }}</strong>
-        </div>
-
-        <div class="subinfo">
-            Última atualização: {{ resultado.data_atualizacao }}
-        </div>
-
-        <div class="linha">
-            <span>Para-brisa Paralelo</span>
-            <strong>R$ {{ "%.2f"|format(resultado.paralelo) }}</strong>
-        </div>
-
-        <div class="subinfo">
-            Última atualização: {{ resultado.data_atualizacao }}
-        </div>
-
-        <hr>
-
-        <div class="linha">
-            <span>Média</span>
-            <strong>R$ {{ "%.2f"|format(resultado.media) }}</strong>
-        </div>
-
-        <div class="linha">
-            <span>Percentual Aplicado</span>
-            <strong>{{ resultado.percentual }}%</strong>
-        </div>
-
-        <div class="linha">
-            <span>Teto Aplicado</span>
-            <strong>R$ {{ "%.2f"|format(resultado.teto) }}</strong>
-        </div>
-
-        <hr>
-
-        <div class="valor-final">
-            R$ {{ "%.2f"|format(resultado.valor_final) }}
-        </div>
-
-        <div class="legenda-final">
-            Valor sugerido para execução do reparo
-        </div>
-
+    <!-- MENSAGEM DE ERRO -->
+    {% if mensagem %}
+    <div class="alerta alerta-aviso" style="margin-top: 20px;">
+        {{ mensagem }}
     </div>
-
     {% endif %}
 
     <!-- RODAPÉ -->
     <footer>
-        Sistema Inteligente de Consulta de Reparo de Para-brisas
+        Sistema Inteligente de Consulta de Reparo de Para-brisas - Criado por Felipe Cardoso
         <br><br>
-        © 2026 - Criado por Felipe Cardoso
+        © 2026
     </footer>
 
 </div>
 
-<!-- ✅ JavaScript com validação -->
-<script src="{{ url_for('static', filename='appparabrisas.js') }}"></script>
+
+<!-- ══════════════════════════════════════
+     MODAL DE RESULTADO
+══════════════════════════════════════ -->
+{% if resultado %}
+<div class="modal-overlay" id="modalResultado">
+    <div class="modal-card" id="modalCard">
+
+        <!-- HEADER: veículo + fechar -->
+        <div class="modal-header">
+            <div class="modal-veiculo">
+                <div class="modal-veiculo-nome">
+                    {{ request.form.get('marca') }}
+                    {{ request.form.get('modelo') }}
+                    <span style="font-weight:400; color:#607080;">
+                        {{ request.form.get('ano') }}
+                    </span>
+                </div>
+                <div class="modal-veiculo-meta">
+                    via {{ resultado.fonte }} &nbsp;·&nbsp;
+                    {% if resultado.avarias == 1 %}
+                        1 avaria
+                    {% else %}
+                        {{ resultado.avarias }} avarias
+                    {% endif %}
+                </div>
+            </div>
+            <button class="modal-fechar" onclick="fecharModal()" title="Fechar">✕</button>
+        </div>
+
+        <!-- CORPO -->
+        <div class="modal-body">
+
+            <!-- Badge categoria -->
+            <div class="modal-badge-wrap">
+                <span class="badge {{ resultado.classe_categoria }}">
+                    {{ resultado.icone_categoria }} {{ resultado.categoria }}
+                </span>
+            </div>
+
+            <!-- Preços -->
+            <div class="modal-precos">
+                <div class="modal-linha">
+                    <span>Para-brisa Original</span>
+                    <span>R$ {{ "%.2f"|format(resultado.original) }}</span>
+                </div>
+                <div class="modal-linha">
+                    <span>Para-brisa Paralelo</span>
+                    <span>R$ {{ "%.2f"|format(resultado.paralelo) }}</span>
+                </div>
+                <div class="modal-linha destaque">
+                    <span>Média</span>
+                    <span>R$ {{ "%.2f"|format(resultado.media) }}</span>
+                </div>
+            </div>
+
+            <!-- Percentual e Teto (discretos) -->
+            <div class="modal-linha" style="margin-bottom: 4px;">
+                <span>Percentual aplicado</span>
+                <span>{{ resultado.percentual }}%</span>
+            </div>
+            <div class="modal-linha" style="margin-bottom: 16px;">
+                <span>Teto máximo</span>
+                <span>R$ {{ "%.2f"|format(resultado.teto) }}</span>
+            </div>
+
+            <!-- Valor de Serviço -->
+            <div class="modal-valor-servico">
+                <span class="label">Valor de Serviço</span>
+                <div class="valor">
+                    <strong>R$ {{ "%.2f"|format(resultado.valor_final) }}</strong>
+                    <small>
+                        para
+                        {% if resultado.avarias == 1 %}1 avaria{% else %}{{ resultado.avarias }} avarias{% endif %}
+                    </small>
+                </div>
+            </div>
+
+            <!-- Botão nova consulta -->
+            <button class="modal-nova-consulta" onclick="fecharModal()">
+                ← Nova Consulta
+            </button>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // Abre o modal com delay suave
+    window.addEventListener('DOMContentLoaded', function () {
+        const overlay = document.getElementById('modalResultado');
+        const card    = document.getElementById('modalCard');
+
+        // Mostra overlay
+        overlay.classList.add('aberto');
+
+        // Delay para a animação entrar
+        setTimeout(function () {
+            card.classList.add('visivel');
+        }, 80);
+    });
+
+    function fecharModal() {
+        const overlay = document.getElementById('modalResultado');
+        const card    = document.getElementById('modalCard');
+
+        // Anima saída
+        card.classList.remove('visivel');
+        setTimeout(function () {
+            overlay.classList.remove('aberto');
+        }, 300);
+    }
+
+    // Fecha ao clicar fora do card
+    document.getElementById('modalResultado').addEventListener('click', function (e) {
+        if (e.target === this) fecharModal();
+    });
+
+    // Fecha com Escape
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') fecharModal();
+    });
+</script>
+{% endif %}
 
 </body>
-
 </html>
