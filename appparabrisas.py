@@ -26,10 +26,10 @@ csrf = CSRFProtect(app)
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
-    import psycopg2
-    import psycopg2.extras
+    import pg8000
+    from urllib.parse import urlparse as _urlparse
     PH  = "%s"       # placeholder PostgreSQL
-    logger.info("Usando PostgreSQL")
+    logger.info("Usando PostgreSQL (pg8000)")
 else:
     import sqlite3
     PH  = "?"        # placeholder SQLite
@@ -40,8 +40,15 @@ else:
 def get_conn():
     """Retorna conexão com o banco correto."""
     if DATABASE_URL:
-        url = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-        return psycopg2.connect(url)
+        url = _urlparse(DATABASE_URL)
+        return pg8000.connect(
+            host=url.hostname,
+            database=url.path.lstrip("/"),
+            user=url.username,
+            password=url.password,
+            port=url.port or 5432,
+            ssl_context=True
+        )
     else:
         return sqlite3.connect(DB)
 
