@@ -186,7 +186,7 @@ def extrair_preco_texto(texto):
         if match:
             try:
                 valor = float(match.group(1).replace('.', '').replace(',', '.'))
-                if 200 <= valor <= 25000:
+                if 400 <= valor <= 25000:
                     return valor
             except ValueError:
                 continue
@@ -226,10 +226,17 @@ def extrair_precos_de_resultado(resultado_serp):
 
     if not precos:
         for item in resultado_serp.get('organic_results', [])[:8]:
-            texto = f"{item.get('title', '')} {item.get('snippet', '')}"
+            titulo  = item.get('title', '')
+            snippet = item.get('snippet', '')
+            texto   = f"{titulo} {snippet}"
+            # Só aceita preço se o snippet menciona "parabrisa" ou "vidro"
+            termos_validos = any(t in texto.lower() for t in ['parabrisa', 'vidro', 'brisa'])
+            if not termos_validos:
+                continue
             p = extrair_preco_texto(texto)
             if p:
                 precos.append(p)
+                logger.info(f"  Orgânico aceito: R$ {p} | {snippet[:80]}")
 
     return precos
 
@@ -247,6 +254,17 @@ def buscar_precos_online(marca, modelo, ano):
 
         logger.info(f"Preços originais: {precos_orig}")
         logger.info(f"Preços paralelos: {precos_par}")
+
+        def remover_outliers(precos):
+            """Remove preços muito fora da mediana (proteção contra preços errados)."""
+            if len(precos) < 3:
+                return precos
+            precos_ord = sorted(precos)
+            mediana = precos_ord[len(precos_ord) // 2]
+            return [p for p in precos if 0.25 * mediana <= p <= 3.5 * mediana]
+
+        precos_orig = remover_outliers(precos_orig)
+        precos_par  = remover_outliers(precos_par)
 
         original = round(sum(precos_orig) / len(precos_orig), 2) if precos_orig else None
         paralelo = round(sum(precos_par)  / len(precos_par),  2) if precos_par  else None
