@@ -362,6 +362,7 @@ def index():
                 logger.error(f"Erro ao salvar consulta: {e}")
 
             resultado = {
+                "marca": marca, "modelo": modelo, "ano": ano,
                 "original": original, "paralelo": paralelo, "media": media,
                 "categoria": info["categoria"], "classe_categoria": info["classe"],
                 "icone_categoria": info["icone"],
@@ -428,14 +429,37 @@ def exportar_pdf():
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from io import BytesIO
 
+        # Filtros opcionais via query string
+        filtro_marca  = request.args.get('marca',  '').strip()
+        filtro_modelo = request.args.get('modelo', '').strip()
+
         conn   = get_conn()
         cursor = conn.cursor()
-        cursor.execute("""
-        SELECT data_consulta, marca, modelo, ano, original, paralelo, media, avarias, valor_final
-        FROM consultas ORDER BY id DESC LIMIT 100
-        """)
+
+        query  = "SELECT data_consulta, marca, modelo, ano, original, paralelo, media, avarias, valor_final FROM consultas WHERE 1=1"
+        params = []
+
+        if filtro_marca:
+            query += f" AND LOWER(marca) LIKE LOWER({PH})"
+            params.append(f'%{filtro_marca}%')
+
+        if filtro_modelo:
+            query += f" AND LOWER(modelo) LIKE LOWER({PH})"
+            params.append(f'%{filtro_modelo}%')
+
+        query += " ORDER BY id DESC LIMIT 100"
+        cursor.execute(query, params)
         dados = cursor.fetchall()
         conn.close()
+
+        # Título do PDF reflete o filtro ativo
+        titulo_filtro = ""
+        if filtro_marca and filtro_modelo:
+            titulo_filtro = f" — {filtro_marca} {filtro_modelo}"
+        elif filtro_marca:
+            titulo_filtro = f" — {filtro_marca}"
+        elif filtro_modelo:
+            titulo_filtro = f" — {filtro_modelo}"
 
         buffer = BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=A4,
@@ -448,12 +472,13 @@ def exportar_pdf():
         titulo_estilo = ParagraphStyle("t", parent=estilos["Title"],
                                        fontSize=18, spaceAfter=6,
                                        textColor=colors.HexColor("#0d6efd"))
-        elementos.append(Paragraph("Histórico de Consultas", titulo_estilo))
+        elementos.append(Paragraph(f"Histórico de Consultas{titulo_filtro}", titulo_estilo))
 
         sub_estilo = ParagraphStyle("s", parent=estilos["Normal"],
                                     fontSize=10, spaceAfter=20, textColor=colors.grey)
         elementos.append(Paragraph(
-            f"Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')} — {len(dados)} registros",
+            f"Gerado em {datetime.now().strftime('%d/%m/%Y %H:%M')} — {len(dados)} registro(s)" +
+                (f" | Filtro: {filtro_marca} {filtro_modelo}".strip() if filtro_marca or filtro_modelo else ""),
             sub_estilo
         ))
 
