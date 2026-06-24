@@ -40,14 +40,18 @@ else:
 def get_conn():
     """Retorna conexão com o banco correto."""
     if DATABASE_URL:
+        import ssl
         url = _urlparse(DATABASE_URL)
+        ssl_ctx = ssl.create_default_context()
+        ssl_ctx.check_hostname = False
+        ssl_ctx.verify_mode = ssl.CERT_NONE
         return pg8000.connect(
             host=url.hostname,
             database=url.path.lstrip("/"),
             user=url.username,
             password=url.password,
             port=url.port or 5432,
-            ssl_context=True
+            ssl_context=ssl_ctx
         )
     else:
         return sqlite3.connect(DB)
