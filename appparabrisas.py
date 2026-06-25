@@ -153,16 +153,40 @@ def buscar_veiculo(marca, modelo, ano):
 
 
 def salvar_veiculo_cache(marca, modelo, ano, original, paralelo):
+    """
+    Salva ou atualiza veículo no cache.
+    - Se já existe: atualiza os preços mas PRESERVA a data original
+    - Se não existe: insere com a data de hoje
+    """
     try:
         conn   = get_conn()
         cursor = conn.cursor()
+
+        # Verifica se já existe no banco
         cursor.execute(
-            f"INSERT INTO veiculos (marca,modelo,ano,original,paralelo,data_atualizacao) VALUES ({PH},{PH},{PH},{PH},{PH},{PH})",
-            (marca, modelo, ano, original, paralelo, datetime.now().strftime("%d/%m/%Y"))
+            f"SELECT id FROM veiculos WHERE LOWER(marca)=LOWER({PH}) AND LOWER(modelo)=LOWER({PH}) AND ano={PH}",
+            (marca, modelo, ano)
         )
+        existe = cursor.fetchone()
+
+        if existe:
+            # Atualiza preços — data de pesquisa original é PRESERVADA
+            cursor.execute(
+                f"UPDATE veiculos SET original={PH}, paralelo={PH} WHERE id={PH}",
+                (original, paralelo, existe[0])
+            )
+            logger.info(f"Preços atualizados (data preservada): {marca} {modelo} {ano}")
+        else:
+            # Primeiro registro — salva com data de hoje
+            cursor.execute(
+                f"INSERT INTO veiculos (marca,modelo,ano,original,paralelo,data_atualizacao) VALUES ({PH},{PH},{PH},{PH},{PH},{PH})",
+                (marca, modelo, ano, original, paralelo, datetime.now().strftime("%d/%m/%Y"))
+            )
+            logger.info(f"Novo veículo salvo no cache: {marca} {modelo} {ano}")
+
         conn.commit()
         conn.close()
-        logger.info(f"Veículo salvo no cache: {marca} {modelo} {ano}")
+
     except Exception as e:
         logger.error(f"Erro ao salvar cache: {e}")
 
