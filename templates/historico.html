@@ -55,7 +55,7 @@
         </div>
         <div class="filtros-acoes">
             <button class="btn-limpar" onclick="limparFiltros()">✕ Limpar</button>
-            <button onclick="exportarPDF()" class="btn-exportar">📄 Exportar PDF</button>
+            <a href="/exportar-pdf" id="linkPDF" class="btn-exportar" target="_blank">📄 Exportar PDF</a>
         </div>
     </div>
 
@@ -260,6 +260,7 @@ function aplicarFiltros() {
     });
 
     document.getElementById('semResultados').style.display = visiveis === 0 ? 'block' : 'none';
+    atualizarLinkPDF();
 }
 
 function limparFiltros() {
@@ -267,6 +268,7 @@ function limparFiltros() {
     document.getElementById('filtro-modelo').value = '';
     document.querySelectorAll('.linha-tabela').forEach(c => c.style.display = '');
     document.getElementById('semResultados').style.display = 'none';
+    atualizarLinkPDF();
 }
 </script>
 </body>
