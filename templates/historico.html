@@ -55,7 +55,7 @@
         </div>
         <div class="filtros-acoes">
             <button class="btn-limpar" onclick="limparFiltros()">✕ Limpar</button>
-            <a href="/exportar-pdf" id="linkPDF" class="btn-exportar" target="_blank">📄 Exportar PDF</a>
+            <a href="/exportar-pdf" id="linkPDF" class="btn-exportar" target="_blank" onclick="atualizarLinkPDF()">📄 Exportar PDF</a>
         </div>
     </div>
 
@@ -244,6 +244,20 @@ if (ctxC) {
     });
 }
 {% endif %}
+
+// Atualiza href do PDF com filtros ativos (chamada ANTES de clicar)
+function atualizarLinkPDF() {
+    const marca  = document.getElementById('filtro-marca').value.trim();
+    const modelo = document.getElementById('filtro-modelo').value.trim();
+    const link   = document.getElementById('linkPDF');
+    if (!link) return;
+    let url = '/exportar-pdf';
+    const params = [];
+    if (marca)  params.push('marca='  + encodeURIComponent(marca));
+    if (modelo) params.push('modelo=' + encodeURIComponent(modelo));
+    if (params.length > 0) url += '?' + params.join('&');
+    link.href = url;
+}
 
 // FILTRO em tempo real
 function aplicarFiltros() {
