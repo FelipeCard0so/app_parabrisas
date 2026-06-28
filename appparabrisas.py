@@ -309,6 +309,46 @@ def buscar_precos_online(marca, modelo, ano):
         return None, None
 
 
+
+# ==================================================
+# STATUS SERPAPI — interações restantes no mês
+# ==================================================
+
+def get_serpapi_status():
+    """
+    Consulta a API da SerpAPI para obter dados reais de uso:
+    - Pesquisas restantes no mês
+    - Total permitido por mês
+    Retorna None se falhar (não bloqueia o resto da página).
+    """
+    try:
+        api_key = os.getenv("SERPAPI_KEY")
+        if not api_key:
+            return None
+
+        from serpapi import GoogleSearch
+        client = GoogleSearch({"api_key": api_key})
+        data   = client.get_account()
+
+        # Tenta diferentes nomes de campo (a SerpAPI usa variações)
+        restam = (
+            data.get("plan_searches_left") or
+            data.get("total_searches_left") or
+            data.get("searches_left") or 0
+        )
+        total = (
+            data.get("plan_monthly_searches") or
+            data.get("searches_per_month") or
+            data.get("monthly_searches") or 250
+        )
+
+        logger.info(f"SerpAPI status: {restam}/{total} restantes")
+        return {"restam": int(restam), "total": int(total)}
+
+    except Exception as e:
+        logger.error(f"Erro ao buscar status SerpAPI: {e}")
+        return None
+
 # ==================================================
 # REGRAS DE NEGÓCIO
 # ==================================================
@@ -433,10 +473,13 @@ def historico():
         logger.error(f"Erro ao buscar histórico: {e}")
         dados = []; pagina = 1; total_paginas = 1; total_registros = 0
 
+    serpapi_status = get_serpapi_status()
+
     return render_template(
         "historico.html",
         dados=dados, pagina=pagina,
-        total_paginas=total_paginas, total_registros=total_registros
+        total_paginas=total_paginas, total_registros=total_registros,
+        serpapi_status=serpapi_status
     )
 
 
