@@ -29,6 +29,39 @@
 
     {% if dados %}
 
+    <!-- STATUS SERPAPI -->
+    {% if serpapi_status %}
+    <div class="serpapi-status">
+        {% set pct = ((serpapi_status.total - serpapi_status.restam) / serpapi_status.total * 100) | int %}
+        <div class="serpapi-info">
+            <span class="serpapi-icone">🔍</span>
+            <span class="serpapi-texto">
+                Pesquisas online restantes este mês:
+                <strong>{{ serpapi_status.restam }}</strong>
+                <span class="serpapi-sep">/</span>
+                <span class="serpapi-total">{{ serpapi_status.total }}</span>
+            </span>
+        </div>
+        <div class="serpapi-barra-bg">
+            <div class="serpapi-barra-fill
+                {%- if serpapi_status.restam <= 25 %} serpapi-critico
+                {%- elif serpapi_status.restam <= 75 %} serpapi-alerta
+                {%- else %} serpapi-ok{% endif %}"
+                style="width: {{ [pct, 100]|min }}%">
+            </div>
+        </div>
+        <div class="serpapi-legenda">
+            {% if serpapi_status.restam <= 25 %}
+                ⚠️ Atenção: poucas pesquisas restantes
+            {% elif serpapi_status.restam <= 75 %}
+                Uso moderado — renova no início do mês
+            {% else %}
+                ✅ Uso normal — renova no início do mês
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
     <!-- GRÁFICOS -->
     <div class="graficos-container">
         <div class="grafico-card">
