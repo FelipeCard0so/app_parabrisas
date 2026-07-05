@@ -27,8 +27,6 @@
         <p>Consultas realizadas pelo sistema.</p>
     </div>
 
-    {% if dados %}
-
     <!-- STATUS SERPAPI -->
     {% if serpapi_status %}
     <div class="serpapi-status">
@@ -51,16 +49,14 @@
             </div>
         </div>
         <div class="serpapi-legenda">
-            {% if serpapi_status.restam <= 25 %}
-                ⚠️ Atenção: poucas pesquisas restantes
-            {% elif serpapi_status.restam <= 75 %}
-                Uso moderado — renova no início do mês
-            {% else %}
-                ✅ Uso normal — renova no início do mês
-            {% endif %}
+            {% if serpapi_status.restam <= 25 %}⚠️ Atenção: poucas pesquisas restantes
+            {% elif serpapi_status.restam <= 75 %}Uso moderado — renova no início do mês
+            {% else %}✅ Uso normal — renova no início do mês{% endif %}
         </div>
     </div>
     {% endif %}
+
+    {% if dados %}
 
     <!-- GRÁFICOS -->
     <div class="graficos-container">
@@ -76,27 +72,28 @@
 
     <!-- FILTROS -->
     <div class="filtros-container">
-        <div class="filtro-campo">
-            <label for="filtro-marca">🔍 Marca</label>
-            <input type="text" id="filtro-marca" placeholder="Ex: Fiat — mostra todos os Fiats"
-                   oninput="aplicarFiltros()">
-        </div>
-        <div class="filtro-campo">
-            <label for="filtro-modelo">🔍 Modelo</label>
-            <input type="text" id="filtro-modelo" placeholder="Ex: Onix — mostra todos os anos"
-                   oninput="aplicarFiltros()">
+        <div class="filtro-linha">
+            <div class="filtro-campo">
+                <label for="filtro-marca">🔍 Filtrar por Marca</label>
+                <input type="text" id="filtro-marca" placeholder="Ex: Fiat, BMW..." oninput="aplicarFiltros()">
+            </div>
+            <div class="filtro-campo">
+                <label for="filtro-modelo">🔍 Filtrar por Modelo</label>
+                <input type="text" id="filtro-modelo" placeholder="Ex: Argo, Onix..." oninput="aplicarFiltros()">
+            </div>
         </div>
         <div class="filtros-acoes">
-            <button class="btn-limpar" onclick="limparFiltros()">✕ Limpar</button>
-            <a href="/exportar-pdf" id="linkPDF" class="btn-exportar" target="_blank" onclick="atualizarLinkPDF()">📄 Exportar PDF</a>
+            <button class="btn-filtro btn-limpar" onclick="limparFiltros()">✕ Limpar filtros</button>
+            <a href="/exportar-pdf" id="linkPDF" class="btn-exportar" target="_blank"
+               onclick="atualizarLinkPDF()">📄 Exportar PDF</a>
         </div>
     </div>
 
     <!-- CONTADOR -->
     <div class="info-paginacao">
-        <p id="contadorResultados">
-            Mostrando <strong>{{ (pagina - 1) * 10 + 1 }}</strong>
-            a <strong>{{ [pagina * 10, total_registros]|min }}</strong>
+        <p>Mostrando resultados de
+            <strong>{{ (pagina - 1) * 10 + 1 }}</strong> a
+            <strong>{{ [pagina * 10, total_registros]|min }}</strong>
             de <strong>{{ total_registros }}</strong> consultas
         </p>
     </div>
@@ -104,55 +101,82 @@
     <!-- CARDS -->
     <div id="listaCards">
         {% for item in dados %}
-        {# item: id[0] data[1] marca[2] modelo[3] ano[4] orig[5] par[6] media[7] avarias[8] vf[9] #}
         <div class="card-historico linha-tabela"
+             id="card-{{ item[0] }}"
              data-marca="{{ item[2]|lower }}"
              data-modelo="{{ item[3]|lower }}">
 
+            <!-- AÇÕES NO TOPO DO CARD -->
             <div class="card-header-hist">
                 <span class="card-data">📅 {{ item[1] }}</span>
-                <span class="card-avarias">
-                    {{ item[8] }} {{ "avaria" if item[8] == 1 else "avarias" }}
-                </span>
+                <div class="card-acoes">
+                    <span class="card-avarias">
+                        {% if item[8] == 1 %}1 avaria{% else %}{{ item[8] }} avarias{% endif %}
+                    </span>
+                    <button class="btn-card-editar" onclick="abrirEdicao({{ item[0] }})" title="Editar valores">✏️</button>
+                    <button class="btn-card-excluir" onclick="confirmarExclusao({{ item[0] }}, '{{ item[2] }} {{ item[3] }}')" title="Excluir">✕</button>
+                </div>
             </div>
 
+            <!-- VEÍCULO -->
             <div class="card-veiculo">
                 <strong>{{ item[2] }}</strong> {{ item[3] }}
                 <span class="card-ano">{{ item[4] }}</span>
             </div>
 
-            <div class="card-precos">
+            <!-- PREÇOS (visão normal) -->
+            <div class="card-precos" id="precos-{{ item[0] }}">
                 <div class="card-preco-linha">
                     <span>Para-brisa Original</span>
-                    <span>R$ {{ "%.2f"|format(item[5]) }}</span>
+                    <span class="val-original">R$ {{ "%.2f"|format(item[5]) }}</span>
                 </div>
                 <div class="card-preco-linha">
                     <span>Para-brisa Paralelo</span>
-                    <span>R$ {{ "%.2f"|format(item[6]) }}</span>
+                    <span class="val-paralelo">R$ {{ "%.2f"|format(item[6]) }}</span>
                 </div>
                 <div class="card-preco-linha card-media">
                     <span>Média</span>
-                    <span>R$ {{ "%.2f"|format(item[7]) }}</span>
+                    <span class="val-media">R$ {{ "%.2f"|format(item[7]) }}</span>
                 </div>
             </div>
 
-            <div class="card-valor-servico">
-                <span>Valor de Serviço</span>
-                <strong>
-                    R$ {{ "%.2f"|format(item[9]) }}
-                    <small>(para {{ item[8] }} {{ "avaria" if item[8] == 1 else "avarias" }})</small>
-                </strong>
+            <!-- FORMULÁRIO DE EDIÇÃO (oculto por padrão) -->
+            <div class="card-editar-form" id="form-{{ item[0] }}" style="display:none;">
+                <p class="editar-titulo">✏️ Corrigir valores do para-brisa</p>
+                <div class="editar-campos">
+                    <div class="editar-campo">
+                        <label>Original (R$)</label>
+                        <input type="number" id="orig-{{ item[0] }}" step="0.01" min="0"
+                               value="{{ "%.2f"|format(item[5]) }}" placeholder="Ex: 1800.00">
+                    </div>
+                    <div class="editar-campo">
+                        <label>Paralelo (R$)</label>
+                        <input type="number" id="par-{{ item[0] }}" step="0.01" min="0"
+                               value="{{ "%.2f"|format(item[6]) }}" placeholder="Ex: 1200.00">
+                    </div>
+                </div>
+                <div class="editar-btns">
+                    <button class="btn-editar-salvar" onclick="salvarEdicao({{ item[0] }})">✅ Salvar e Recalcular</button>
+                    <button class="btn-editar-cancelar" onclick="fecharEdicao({{ item[0] }})">Cancelar</button>
+                </div>
+            </div>
+
+            <!-- VALOR DE SERVIÇO -->
+            <div class="card-valor-servico" id="servico-{{ item[0] }}">
+                <span class="label">Valor de Serviço</span>
+                <div class="valor">
+                    <strong class="val-final">R$ {{ "%.2f"|format(item[9]) }}</strong>
+                    <small>(para {% if item[8] == 1 %}1 avaria{% else %}{{ item[8] }} avarias{% endif %})</small>
+                </div>
             </div>
 
         </div>
         {% endfor %}
     </div>
 
-    <!-- NENHUM RESULTADO FILTRO -->
+    <!-- SEM RESULTADOS -->
     <div id="semResultados" style="display:none;">
-        <div class="alerta alerta-info">
-            Nenhum resultado encontrado para este filtro.
-        </div>
+        <div class="alerta alerta-info">Nenhum resultado encontrado para este filtro.</div>
     </div>
 
     <!-- PAGINAÇÃO -->
@@ -162,21 +186,16 @@
         <a href="/historico?pagina=1" class="btn-paginacao">« Primeira</a>
         <a href="/historico?pagina={{ pagina - 1 }}" class="btn-paginacao">‹ Anterior</a>
         {% endif %}
-
         <div class="numeros-pagina">
             {% set inicio = [1, pagina - 2]|max %}
             {% set fim = [total_paginas, pagina + 2]|min %}
-            {% if inicio > 1 %}<span style="color:#666; padding:0 4px;">...</span>{% endif %}
+            {% if inicio > 1 %}<span>...</span>{% endif %}
             {% for p in range(inicio, fim + 1) %}
-                {% if p == pagina %}
-                <span class="pagina-ativa">{{ p }}</span>
-                {% else %}
-                <a href="/historico?pagina={{ p }}" class="btn-paginacao">{{ p }}</a>
-                {% endif %}
+                {% if p == pagina %}<span class="pagina-ativa">{{ p }}</span>
+                {% else %}<a href="/historico?pagina={{ p }}" class="btn-paginacao">{{ p }}</a>{% endif %}
             {% endfor %}
-            {% if fim < total_paginas %}<span style="color:#666; padding:0 4px;">...</span>{% endif %}
+            {% if fim < total_paginas %}<span>...</span>{% endif %}
         </div>
-
         {% if pagina < total_paginas %}
         <a href="/historico?pagina={{ pagina + 1 }}" class="btn-paginacao">Próxima ›</a>
         <a href="/historico?pagina={{ total_paginas }}" class="btn-paginacao">Última »</a>
@@ -189,21 +208,28 @@
         <strong>Nenhuma consulta registrada</strong><br>
         Realize uma consulta para começar a construir seu histórico.
     </div>
-    <div style="text-align:center; margin-top:24px;">
-        <a href="/" class="btn-principal" style="display:inline-block; padding:12px 32px; border-radius:10px;">
-            Nova Consulta
-        </a>
+    <div style="text-align:center;margin-top:30px;">
+        <a href="/" class="btn-principal" style="display:inline-block;padding:10px 30px;">Nova Consulta</a>
     </div>
     {% endif %}
 
-    <footer>
-        Sistema de Consulta de Reparo de Para-brisas<br><br>© 2026
-    </footer>
+    <footer>Sistema de Consulta de Reparo de Para-brisas<br><br>© 2026</footer>
+</div>
 
+<!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO -->
+<div class="modal-overlay" id="modalExcluir" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:1000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);">
+    <div class="modal-confirma">
+        <p class="modal-confirma-titulo">Excluir consulta?</p>
+        <p class="modal-confirma-sub" id="modalExcluirNome"></p>
+        <div class="modal-confirma-btns">
+            <button class="btn-confirma-excluir" id="btnConfirmaExcluir">Excluir</button>
+            <button class="btn-confirma-cancelar" onclick="fecharModalExcluir()">Cancelar</button>
+        </div>
+    </div>
 </div>
 
 <script>
-// Dados para gráficos
+// ─── GRÁFICOS ───────────────────────────────────────────────
 const dadosGrafico = {
     datas:  [{% for item in dados %}"{{ item[1][:5] }}"{{ "," if not loop.last }}{% endfor %}],
     valores:[{% for item in dados %}{{ item[9] }}{{ "," if not loop.last }}{% endfor %}],
@@ -211,102 +237,48 @@ const dadosGrafico = {
 };
 
 {% if dados %}
-// Gráfico linha
 const ctxV = document.getElementById('graficoValores');
-if (ctxV) {
-    new Chart(ctxV, {
-        type: 'line',
-        data: {
-            labels: dadosGrafico.datas,
-            datasets: [{
-                label: 'Valor de Serviço (R$)',
-                data: dadosGrafico.valores,
-                borderColor: '#4a9eff',
-                backgroundColor: 'rgba(74,158,255,0.1)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4,
-                pointRadius: 5,
-                pointBackgroundColor: '#4a9eff',
-                pointBorderColor: '#1a1a1a',
-                pointBorderWidth: 2,
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { labels: { color: '#ccc', font: { size: 13 } } }
-            },
-            scales: {
-                x: { ticks: { color: '#888' }, grid: { color: '#3a3a3a' } },
-                y: {
-                    beginAtZero: true,
-                    ticks: { color: '#888', callback: v => 'R$ ' + v.toFixed(0) },
-                    grid: { color: '#3a3a3a' }
-                }
-            }
-        }
-    });
-}
+if (ctxV) new Chart(ctxV, {
+    type: 'line',
+    data: {
+        labels: dadosGrafico.datas,
+        datasets: [{ label: 'Valor de Serviço (R$)', data: dadosGrafico.valores,
+            borderColor:'#4d9fff', backgroundColor:'rgba(77,159,255,0.1)',
+            borderWidth:3, fill:true, tension:0.4, pointRadius:6,
+            pointBackgroundColor:'#4d9fff', pointBorderColor:'#1c1f26', pointBorderWidth:2 }]
+    },
+    options: { responsive:true, plugins:{legend:{display:true,labels:{color:'#c0d0e0'}}},
+        scales:{ y:{beginAtZero:true, ticks:{color:'#8090a0', callback:v=>'R$'+v.toFixed(0)}},
+                 x:{ticks:{color:'#8090a0'}} } }
+});
 
-// Gráfico pizza
 const ctxC = document.getElementById('graficoCategorias');
 if (ctxC) {
     const cont = {};
-    dadosGrafico.marcas.forEach(m => cont[m] = (cont[m] || 0) + 1);
+    dadosGrafico.marcas.forEach(m => cont[m] = (cont[m]||0)+1);
     new Chart(ctxC, {
-        type: 'doughnut',
-        data: {
-            labels: Object.keys(cont),
-            datasets: [{
-                data: Object.values(cont),
-                backgroundColor: ['#4a9eff','#4dbb77','#ffd666','#ff6b6b','#a29bfe','#fd79a8'],
-                borderColor: '#2a2a2a',
-                borderWidth: 3,
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: { color: '#ccc', font: { size: 13 }, padding: 16 }
-                }
-            }
-        }
+        type:'doughnut',
+        data:{ labels:Object.keys(cont),
+               datasets:[{ data:Object.values(cont),
+                   backgroundColor:['#4d9fff','#4ade80','#fbbf24','#f87171','#a78bfa','#34d399','#fb923c','#60a5fa'],
+                   borderColor:'#1c1f26', borderWidth:3 }] },
+        options:{ responsive:true, plugins:{legend:{position:'right',labels:{color:'#c0d0e0'}}} }
     });
 }
 {% endif %}
 
-// Atualiza href do PDF com filtros ativos (chamada ANTES de clicar)
-function atualizarLinkPDF() {
-    const marca  = document.getElementById('filtro-marca').value.trim();
-    const modelo = document.getElementById('filtro-modelo').value.trim();
-    const link   = document.getElementById('linkPDF');
-    if (!link) return;
-    let url = '/exportar-pdf';
-    const params = [];
-    if (marca)  params.push('marca='  + encodeURIComponent(marca));
-    if (modelo) params.push('modelo=' + encodeURIComponent(modelo));
-    if (params.length > 0) url += '?' + params.join('&');
-    link.href = url;
-}
-
-// FILTRO em tempo real
+// ─── FILTROS ─────────────────────────────────────────────────
 function aplicarFiltros() {
     const marca  = document.getElementById('filtro-marca').value.trim().toLowerCase();
     const modelo = document.getElementById('filtro-modelo').value.trim().toLowerCase();
-    const cards  = document.querySelectorAll('.linha-tabela');
-    let visiveis = 0;
-
-    cards.forEach(card => {
-        const bateMarca  = !marca  || card.dataset.marca.includes(marca);
-        const bateModelo = !modelo || card.dataset.modelo.includes(modelo);
-        card.style.display = bateMarca && bateModelo ? '' : 'none';
-        if (bateMarca && bateModelo) visiveis++;
+    let   vis    = 0;
+    document.querySelectorAll('.linha-tabela').forEach(c => {
+        const ok = (!marca  || c.dataset.marca.includes(marca)) &&
+                   (!modelo || c.dataset.modelo.includes(modelo));
+        c.style.display = ok ? '' : 'none';
+        if (ok) vis++;
     });
-
-    document.getElementById('semResultados').style.display = visiveis === 0 ? 'block' : 'none';
+    document.getElementById('semResultados').style.display = vis === 0 ? 'block' : 'none';
     atualizarLinkPDF();
 }
 
@@ -317,6 +289,107 @@ function limparFiltros() {
     document.getElementById('semResultados').style.display = 'none';
     atualizarLinkPDF();
 }
+
+// ─── PDF ─────────────────────────────────────────────────────
+function atualizarLinkPDF() {
+    const marca  = document.getElementById('filtro-marca').value.trim();
+    const modelo = document.getElementById('filtro-modelo').value.trim();
+    const link   = document.getElementById('linkPDF');
+    if (!link) return;
+    let url = '/exportar-pdf';
+    const p = [];
+    if (marca)  p.push('marca='  + encodeURIComponent(marca));
+    if (modelo) p.push('modelo=' + encodeURIComponent(modelo));
+    if (p.length) url += '?' + p.join('&');
+    link.href = url;
+}
+
+// ─── EDIÇÃO ──────────────────────────────────────────────────
+function abrirEdicao(id) {
+    document.getElementById('form-' + id).style.display = 'block';
+    document.getElementById('form-' + id).scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function fecharEdicao(id) {
+    document.getElementById('form-' + id).style.display = 'none';
+}
+
+function salvarEdicao(id) {
+    const orig = parseFloat(document.getElementById('orig-' + id).value);
+    const par  = parseFloat(document.getElementById('par-'  + id).value);
+
+    if (!orig || !par || orig <= 0 || par <= 0) {
+        alert('Por favor informe valores válidos.');
+        return;
+    }
+
+    const btn = document.querySelector('#form-' + id + ' .btn-editar-salvar');
+    btn.textContent = '⏳ Salvando...';
+    btn.disabled    = true;
+
+    const formData = new FormData();
+    formData.append('original', orig);
+    formData.append('paralelo', par);
+
+    fetch('/editar-consulta/' + id, { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            // Atualiza os valores no card sem recarregar a página
+            const card = document.getElementById('card-' + id);
+            card.querySelector('.val-original').textContent = 'R$ ' + data.original;
+            card.querySelector('.val-paralelo').textContent = 'R$ ' + data.paralelo;
+            card.querySelector('.val-media').textContent    = 'R$ ' + data.media;
+            card.querySelector('.val-final').textContent    = 'R$ ' + data.valor_final;
+            fecharEdicao(id);
+        } else {
+            alert('Erro: ' + (data.erro || 'Tente novamente'));
+        }
+    })
+    .catch(() => alert('Erro de conexão. Tente novamente.'))
+    .finally(() => {
+        btn.textContent = '✅ Salvar e Recalcular';
+        btn.disabled    = false;
+    });
+}
+
+// ─── EXCLUSÃO ────────────────────────────────────────────────
+let _idExcluir = null;
+
+function confirmarExclusao(id, nome) {
+    _idExcluir = id;
+    document.getElementById('modalExcluirNome').textContent = nome;
+    const overlay = document.getElementById('modalExcluir');
+    overlay.style.display = 'flex';
+
+    document.getElementById('btnConfirmaExcluir').onclick = function() {
+        fetch('/excluir-consulta/' + id, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                const card = document.getElementById('card-' + id);
+                card.style.transition = 'opacity 0.3s, transform 0.3s';
+                card.style.opacity    = '0';
+                card.style.transform  = 'translateX(40px)';
+                setTimeout(() => card.remove(), 300);
+                fecharModalExcluir();
+            } else {
+                alert('Erro ao excluir: ' + (data.erro || 'Tente novamente'));
+            }
+        })
+        .catch(() => alert('Erro de conexão.'));
+    };
+}
+
+function fecharModalExcluir() {
+    document.getElementById('modalExcluir').style.display = 'none';
+    _idExcluir = null;
+}
+
+// Fecha modal ao clicar fora
+document.getElementById('modalExcluir').addEventListener('click', function(e) {
+    if (e.target === this) fecharModalExcluir();
+});
 </script>
 </body>
 </html>
