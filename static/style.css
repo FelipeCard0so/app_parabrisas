@@ -294,7 +294,7 @@ button:hover, .btn-principal:hover {
 .grafico-canvas { max-height: 280px; }
 
 /* ==========================
-   FILTROS
+   FILTROS — REDESENHADO
 ========================== */
 
 .filtros-container {
@@ -396,6 +396,19 @@ button:hover, .btn-principal:hover {
 }
 
 /* ==========================
+   INFO PAGINAÇÃO
+========================== */
+
+.info-paginacao {
+    text-align: center;
+    color: #607080;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.info-paginacao strong { color: #c0d0e0; }
+
+/* ==========================
    CARDS HISTÓRICO
 ========================== */
 
@@ -420,7 +433,10 @@ button:hover, .btn-principal:hover {
     margin-bottom: 12px;
 }
 
-.card-data { font-size: 13px; color: #607080; }
+.card-data {
+    font-size: 13px;
+    color: #607080;
+}
 
 .card-avarias {
     font-size: 12px;
@@ -432,9 +448,18 @@ button:hover, .btn-principal:hover {
     border: 1px solid #2a3a55;
 }
 
-.card-veiculo { font-size: 20px; margin-bottom: 16px; color: #f0f0f0; }
+.card-veiculo {
+    font-size: 20px;
+    margin-bottom: 16px;
+    color: #f0f0f0;
+}
 
-.card-ano { display: block; font-size: 13px; color: #607080; margin-top: 3px; }
+.card-ano {
+    display: block;
+    font-size: 13px;
+    color: #607080;
+    margin-top: 3px;
+}
 
 .card-precos {
     border-top: 1px solid #22273a;
@@ -465,147 +490,74 @@ button:hover, .btn-principal:hover {
     align-items: flex-end;
 }
 
-.card-valor-servico > span { font-size: 14px; color: #8090a0; }
+.card-valor-servico > span {
+    font-size: 14px;
+    color: #8090a0;
+}
 
-.card-valor-servico strong { color: #4d9fff; font-size: 20px; text-align: right; }
+.card-valor-servico strong {
+    color: #4d9fff;
+    font-size: 20px;
+    text-align: right;
+}
 
-.card-valor-servico small { display: block; font-size: 12px; color: #607080; font-weight: 400; }
+.card-valor-servico small {
+    display: block;
+    font-size: 12px;
+    color: #607080;
+    font-weight: 400;
+}
 
 /* ==========================
-   AÇÕES NO CARD (Novo do CSS1)
+   PAGINAÇÃO
 ========================== */
 
-.card-acoes { display: flex; align-items: center; gap: 8px; }
-
-.btn-card-editar,
-.btn-card-excluir {
-    width: 30px; height: 30px; border: none; border-radius: 50%; cursor: pointer;
-    font-size: 13px; display: flex; align-items: center; justify-content: center;
-    transition: all 0.2s; padding: 0; flex-shrink: 0; box-shadow: none; transform: none;
+.paginacao {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 30px;
+    flex-wrap: wrap;
 }
-
-.btn-card-editar { background: #1a2535; color: #7bb3ff; border: 1px solid #2a3a55; }
-.btn-card-editar:hover { background: #1f6feb; color: white; }
-
-.btn-card-excluir { background: #2a1015; color: #f87171; border: 1px solid #5c1a20; }
-.btn-card-excluir:hover { background: #f87171; color: white; }
-
-/* ==========================
-   FORMULÁRIO EDIÇÃO (Novo do CSS1)
-========================== */
-
-.card-editar-form {
-    background: #111318; border: 1px solid #2a3a55; border-radius: 12px;
-    padding: 16px; margin: 12px 0;
-}
-
-.editar-titulo { font-size: 13px; font-weight: 600; color: #7bb3ff; margin-bottom: 14px; }
-
-.editar-campos { display: flex; gap: 12px; margin-bottom: 14px; }
-
-.editar-campo { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-
-.editar-campo label { font-size: 12px; color: #607080; font-weight: 600; }
-
-.editar-campo input {
-    padding: 10px 12px; background: #1c1f26; border: 1.5px solid #2a3040;
-    border-radius: 8px; color: #e0e8f0; font-size: 15px; transition: border-color 0.2s;
-}
-
-.editar-campo input:focus { outline: none; border-color: #4d9fff; }
-
-.editar-btns { display: flex; gap: 10px; }
-
-.btn-editar-salvar {
-    flex: 2; padding: 11px; background: #1f6feb; color: white; border: none;
-    border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer;
-}
-
-.btn-editar-salvar:hover { background: #3480f0; }
-
-.btn-editar-cancelar {
-    flex: 1; padding: 11px; background: #22273a; color: #8090a0; border: none;
-    border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer;
-}
-
-.btn-editar-cancelar:hover { background: #2a3040; }
-
-/* ==========================
-   MODAL EXCLUSÃO (Novo do CSS1)
-========================== */
-
-.modal-confirma {
-    background: #1c1f26; border: 1px solid #5c1a20; border-radius: 16px;
-    padding: 30px 24px; width: 100%; max-width: 340px; text-align: center;
-}
-
-.modal-confirma-titulo { font-size: 18px; font-weight: 700; color: #f0f0f0; margin-bottom: 8px; }
-
-.modal-confirma-sub { font-size: 14px; color: #8090a0; margin-bottom: 24px; }
-
-.modal-confirma-btns { display: flex; gap: 12px; }
-
-.btn-confirma-excluir {
-    flex: 1; padding: 12px; background: #f87171; color: white; border: none;
-    border-radius: 10px; font-weight: 700; font-size: 15px; cursor: pointer;
-}
-
-.btn-confirma-excluir:hover { background: #ef4444; }
-
-.btn-confirma-cancelar {
-    flex: 1; padding: 12px; background: #22273a; color: #c0d0e0; border: none;
-    border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer;
-}
-
-.btn-confirma-cancelar:hover { background: #2a3040; }
-
-/* ==========================
-   STATUS SERPAPI (Mantido do CSS2)
-========================== */
-
-.serpapi-status {
-    background: #13161d;
-    border: 1px solid #2a3040;
-    border-radius: 12px;
-    padding: 14px 18px;
-    margin-bottom: 24px;
-}
-
-.serpapi-info { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-.serpapi-icone { font-size: 16px; flex-shrink: 0; }
-.serpapi-texto { font-size: 13px; color: #8090a0; }
-.serpapi-texto strong { color: #e0e8f0; font-size: 15px; }
-.serpapi-sep { color: #4a5568; margin: 0 3px; }
-.serpapi-total { color: #607080; font-size: 13px; }
-
-.serpapi-barra-bg { background: #22273a; border-radius: 6px; height: 5px; overflow: hidden; margin-bottom: 8px; }
-.serpapi-barra-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease; }
-
-.serpapi-ok      { background: #4ade80; }
-.serpapi-alerta  { background: #fbbf24; }
-.serpapi-critico { background: #f87171; }
-.serpapi-legenda { font-size: 11px; color: #4a5568; }
-
-/* ==========================
-   PAGINAÇÃO & RODAPÉ
-========================== */
-
-.paginacao { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 30px; flex-wrap: wrap; }
 
 .btn-paginacao {
-    padding: 9px 14px; border: 1.5px solid #2a3a55; background: #13161d;
-    color: #4d9fff; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; transition: all 0.3s;
+    padding: 9px 14px;
+    border: 1.5px solid #2a3a55;
+    background: #13161d;
+    color: #4d9fff;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s;
 }
 
-.btn-paginacao:hover { background: #1f6feb; color: white; border-color: #1f6feb; }
+.btn-paginacao:hover {
+    background: #1f6feb;
+    color: white;
+    border-color: #1f6feb;
+}
 
 .pagina-ativa {
-    padding: 9px 14px; background: #1f6feb; color: white; border-radius: 8px; font-weight: 700;
+    padding: 9px 14px;
+    background: #1f6feb;
+    color: white;
+    border-radius: 8px;
+    font-weight: 700;
 }
 
+/* ==========================
+   RODAPÉ
+========================== */
+
 footer {
-    margin-top: 48px; text-align: center; color: #4a5568; font-size: 13px;
-    border-top: 1px solid #22273a; padding-top: 24px;
+    margin-top: 48px;
+    text-align: center;
+    color: #4a5568;
+    font-size: 13px;
+    border-top: 1px solid #22273a;
+    padding-top: 24px;
 }
 
 /* ==========================
@@ -623,3 +575,71 @@ footer {
     .card-valor-servico { flex-direction: column; gap: 8px; }
     .card-valor-servico strong { font-size: 18px; }
 }
+
+/* ==========================
+   STATUS SERPAPI
+========================== */
+
+.serpapi-status {
+    background: #13161d;
+    border: 1px solid #2a3040;
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 24px;
+}
+
+.serpapi-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.serpapi-icone {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.serpapi-texto {
+    font-size: 13px;
+    color: #8090a0;
+}
+
+.serpapi-texto strong {
+    color: #e0e8f0;
+    font-size: 15px;
+}
+
+.serpapi-sep {
+    color: #4a5568;
+    margin: 0 3px;
+}
+
+.serpapi-total {
+    color: #607080;
+    font-size: 13px;
+}
+
+.serpapi-barra-bg {
+    background: #22273a;
+    border-radius: 6px;
+    height: 5px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.serpapi-barra-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.6s ease;
+}
+
+.serpapi-ok      { background: #4ade80; }
+.serpapi-alerta  { background: #fbbf24; }
+.serpapi-critico { background: #f87171; }
+
+.serpapi-legenda {
+    font-size: 11px;
+    color: #4a5568;
+}
+
