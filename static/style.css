@@ -5,7 +5,7 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 /* ==========================
-   BODY — DARK THEME
+   BODY â€” DARK THEME
 ========================== */
 
 body {
@@ -77,7 +77,7 @@ body {
 }
 
 /* ==========================
-   CABEÇALHO
+   CABEÃ‡ALHO
 ========================== */
 
 .cabecalho {
@@ -97,7 +97,7 @@ body {
 }
 
 /* ==========================
-   FORMULÁRIO
+   FORMULÃRIO
 ========================== */
 
 form {
@@ -130,9 +130,7 @@ form {
     transition: all 0.3s;
 }
 
-.grupo-campos input::placeholder {
-    color: #4a5568;
-}
+.grupo-campos input::placeholder { color: #4a5568; }
 
 .grupo-campos input:focus {
     outline: none;
@@ -148,7 +146,7 @@ form {
 }
 
 /* ==========================
-   BOTÃO PRINCIPAL
+   BOTÃƒO PRINCIPAL
 ========================== */
 
 button, .btn-principal {
@@ -229,9 +227,9 @@ button:hover, .btn-principal:hover {
     margin-bottom: 20px;
 }
 
-.badge.popular      { background: #1a3020; color: #4ade80; border: 1px solid #2d5c3a; }
-.badge.intermediario{ background: #2a2010; color: #fbbf24; border: 1px solid #5c4a0a; }
-.badge.premium      { background: #2a1015; color: #f87171; border: 1px solid #5c1a20; }
+.badge.popular       { background: #1a3020; color: #4ade80; border: 1px solid #2d5c3a; }
+.badge.intermediario { background: #2a2010; color: #fbbf24; border: 1px solid #5c4a0a; }
+.badge.premium       { background: #2a1015; color: #f87171; border: 1px solid #5c1a20; }
 
 .linha {
     display: flex;
@@ -272,7 +270,7 @@ button:hover, .btn-principal:hover {
 }
 
 /* ==========================
-   GRÁFICOS
+   GRÃFICOS
 ========================== */
 
 .graficos-container { margin-top: 30px; }
@@ -294,7 +292,7 @@ button:hover, .btn-principal:hover {
 .grafico-canvas { max-height: 280px; }
 
 /* ==========================
-   FILTROS — REDESENHADO
+   FILTROS
 ========================== */
 
 .filtros-container {
@@ -367,9 +365,7 @@ button:hover, .btn-principal:hover {
     flex: 1;
 }
 
-.btn-limpar:hover {
-    background: #3a4050;
-}
+.btn-limpar:hover { background: #3a4050; }
 
 .btn-exportar {
     display: flex;
@@ -396,7 +392,7 @@ button:hover, .btn-principal:hover {
 }
 
 /* ==========================
-   INFO PAGINAÇÃO
+   INFO PAGINAÃ‡ÃƒO
 ========================== */
 
 .info-paginacao {
@@ -409,7 +405,7 @@ button:hover, .btn-principal:hover {
 .info-paginacao strong { color: #c0d0e0; }
 
 /* ==========================
-   CARDS HISTÓRICO
+   CARDS HISTÃ“RICO
 ========================== */
 
 .card-historico {
@@ -446,6 +442,59 @@ button:hover, .btn-principal:hover {
     border-radius: 20px;
     font-weight: 600;
     border: 1px solid #2a3a55;
+}
+
+.card-acoes {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-card-editar,
+.btn-card-excluir {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+    flex-shrink: 0;
+    /* resetar heranÃ§a do button global */
+    transform: none !important;
+    box-shadow: none !important;
+    font-weight: normal;
+    font-size: 13px;
+    line-height: 1;
+}
+
+.btn-card-editar {
+    background: #1a2535;
+    color: #7bb3ff;
+    border: 1px solid #2a3a55;
+}
+
+.btn-card-editar:hover {
+    background: #1f6feb;
+    color: white;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.btn-card-excluir {
+    background: #2a1015;
+    color: #f87171;
+    border: 1px solid #5c1a20;
+}
+
+.btn-card-excluir:hover {
+    background: #f87171;
+    color: white;
+    transform: none !important;
+    box-shadow: none !important;
 }
 
 .card-veiculo {
@@ -509,7 +558,164 @@ button:hover, .btn-principal:hover {
 }
 
 /* ==========================
-   PAGINAÇÃO
+   FORMULÃRIO DE EDIÃ‡ÃƒO
+========================== */
+
+.card-editar-form {
+    background: #111318;
+    border: 1px solid #2a3a55;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 12px 0;
+}
+
+.editar-titulo {
+    font-size: 13px;
+    font-weight: 600;
+    color: #7bb3ff;
+    margin-bottom: 14px;
+}
+
+.editar-campos {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.editar-campo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.editar-campo label {
+    font-size: 12px;
+    color: #607080;
+    font-weight: 600;
+}
+
+.editar-campo input {
+    padding: 10px 12px;
+    background: #1c1f26;
+    border: 1.5px solid #2a3040;
+    border-radius: 8px;
+    color: #e0e8f0;
+    font-size: 15px;
+}
+
+.editar-campo input:focus {
+    outline: none;
+    border-color: #4d9fff;
+}
+
+.editar-btns {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-editar-salvar {
+    flex: 2;
+    padding: 11px;
+    background: #1f6feb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.btn-editar-salvar:hover {
+    background: #3480f0;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.btn-editar-salvar:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.btn-editar-cancelar {
+    flex: 1;
+    padding: 11px;
+    background: #22273a;
+    color: #8090a0;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* ==========================
+   MODAL CONFIRMAÃ‡ÃƒO EXCLUSÃƒO
+========================== */
+
+.modal-confirma {
+    background: #1c1f26;
+    border: 1px solid #5c1a20;
+    border-radius: 16px;
+    padding: 30px 24px;
+    width: 100%;
+    max-width: 340px;
+    text-align: center;
+}
+
+.modal-confirma-titulo {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f0f0f0;
+    margin-bottom: 8px;
+}
+
+.modal-confirma-sub {
+    font-size: 14px;
+    color: #8090a0;
+    margin-bottom: 24px;
+}
+
+.modal-confirma-btns {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-confirma-excluir {
+    flex: 1;
+    padding: 12px;
+    background: #f87171;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.btn-confirma-excluir:hover {
+    background: #ef4444;
+}
+
+.btn-confirma-cancelar {
+    flex: 1;
+    padding: 12px;
+    background: #22273a;
+    color: #c0d0e0;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* ==========================
+   PAGINAÃ‡ÃƒO
 ========================== */
 
 .paginacao {
@@ -548,7 +754,7 @@ button:hover, .btn-principal:hover {
 }
 
 /* ==========================
-   RODAPÉ
+   RODAPÃ‰
 ========================== */
 
 footer {
@@ -558,22 +764,6 @@ footer {
     font-size: 13px;
     border-top: 1px solid #22273a;
     padding-top: 24px;
-}
-
-/* ==========================
-   RESPONSIVO
-========================== */
-
-@media (max-width: 768px) {
-    .container { margin: 10px; padding: 20px; }
-    .logo { width: 160px; }
-    .cabecalho h1 { font-size: 22px; }
-    .valor-final { font-size: 34px; }
-    .linha { flex-direction: column; gap: 6px; align-items: flex-start; }
-    .filtro-linha { flex-direction: column; }
-    .filtros-acoes { flex-direction: column; }
-    .card-valor-servico { flex-direction: column; gap: 8px; }
-    .card-valor-servico strong { font-size: 18px; }
 }
 
 /* ==========================
@@ -595,30 +785,11 @@ footer {
     margin-bottom: 10px;
 }
 
-.serpapi-icone {
-    font-size: 16px;
-    flex-shrink: 0;
-}
-
-.serpapi-texto {
-    font-size: 13px;
-    color: #8090a0;
-}
-
-.serpapi-texto strong {
-    color: #e0e8f0;
-    font-size: 15px;
-}
-
-.serpapi-sep {
-    color: #4a5568;
-    margin: 0 3px;
-}
-
-.serpapi-total {
-    color: #607080;
-    font-size: 13px;
-}
+.serpapi-icone { font-size: 16px; flex-shrink: 0; }
+.serpapi-texto { font-size: 13px; color: #8090a0; }
+.serpapi-texto strong { color: #e0e8f0; font-size: 15px; }
+.serpapi-sep   { color: #4a5568; margin: 0 3px; }
+.serpapi-total { color: #607080; font-size: 13px; }
 
 .serpapi-barra-bg {
     background: #22273a;
@@ -637,9 +808,21 @@ footer {
 .serpapi-ok      { background: #4ade80; }
 .serpapi-alerta  { background: #fbbf24; }
 .serpapi-critico { background: #f87171; }
+.serpapi-legenda { font-size: 11px; color: #4a5568; }
 
-.serpapi-legenda {
-    font-size: 11px;
-    color: #4a5568;
+/* ==========================
+   RESPONSIVO
+========================== */
+
+@media (max-width: 768px) {
+    .container { margin: 10px; padding: 20px; }
+    .logo { width: 160px; }
+    .cabecalho h1 { font-size: 22px; }
+    .valor-final { font-size: 34px; }
+    .linha { flex-direction: column; gap: 6px; align-items: flex-start; }
+    .filtro-linha { flex-direction: column; }
+    .filtros-acoes { flex-direction: column; }
+    .card-valor-servico { flex-direction: column; gap: 8px; }
+    .card-valor-servico strong { font-size: 18px; }
+    .editar-campos { flex-direction: column; }
 }
-
